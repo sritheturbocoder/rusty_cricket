@@ -4,57 +4,45 @@ use std::process;
 
 fn main() {
     println!("Fun with HAND CRICKET!");
-    let mut toss = String::new();
     println!("Choose Odd / Even ? (O/E)");
-    match io::stdin().read_line(&mut toss) {
-        Ok(n) => {
-            println!("{} bytes read", n);
-            println!("You enterted {} ", toss);
-        },
-        Err(error) => println!("error: {}", error),
-    }
+    let toss : String = get_player_input()
+            .unwrap_or_else(|e| exit_err(&e, e.raw_os_error().unwrap_or(-1)))
+            .trim()
+            .parse()
+            .unwrap_or_else(|e| exit_err(&e, 2));
     
-    let mut user_toss_numberstr = String::new();
-    match toss.chars().next().unwrap()  {
-        'o' | 'O' => {
-            println!("You choose Odd so I will take Even !");
-            println!("Let's toss now !!!");
-    
-        },
-        'e' | 'E' => {
-            println!("You choose Even so I will take Odd !");
-            println!("Let's toss now !!!");
-        },
-        _ => {
-            panic!("Invalid input...please enter O or E")
-        }
-    }
+    println!("Enter your toss number ");
+    let user_toss_numberstr :u16 = get_player_input()
+            .unwrap_or_else(|e| exit_err(&e, e.raw_os_error().unwrap_or(-1)))
+            .trim()
+            .parse()
+            .unwrap_or_else(|e| exit_err(&e, 2));
+    check_for_user_input(toss, user_toss_numberstr);
+}
 
-    
-    match io::stdin().read_line(&mut user_toss_numberstr) {
+fn get_player_input() -> io::Result<String> {
+    let mut buf = String::new();
+    match io::stdin().read_line(&mut buf) {
         Ok(n) => {
             println!("{} bytes read", n);
-            println!("You entered {}", user_toss_numberstr);
+            println!("You enterted {} ", buf);
         },
         Err(error) => println!("error: {}", error),
     }
 
-    let user_entered_number : u32 = match user_toss_numberstr.trim().parse(){
-        Ok(num) => num,
-        Err(err) => {
-            panic!("Invalid input please input a valid number. Your input resulted in {}", err)
-        }
-    };
+    Ok(buf)
+}
 
+fn check_for_user_input(toss : String, user_toss_number: u16) {
     match toss.chars().next().unwrap()  {
         'o' | 'O' => {
-            match user_entered_number % 2 {
-                0 => panic!("You promised to enter odd but you cheated !!"),
+            match user_toss_number % 2 {
+                0 => panic!("You promised to enter odd..I am smart you can't cheat me !!"),
                 _ => println!("Thanks, Now let me show my number")
             }
         },
         'e' | 'E' => {
-            match user_entered_number % 2 {
+            match user_toss_number % 2 {
                 0 => println!("Thanks, Now let me show my number"),
                 _ => panic!("You promised to enter even but you cheated !!")
             }
@@ -65,20 +53,7 @@ fn main() {
     }
 }
 
-fn GetPlayerInput(msg : &str) -> io::Result<String> {
-    let mut buf = String::new();
-    print!("{}", msg);
-    //let mut file = try!(io::stdout().flush());
-    io::stdout().flush().ok().expect("Could not flush stdout");
-    io::stdin().read_line(&mut buf).ok().expect("Could not read line");
-
-    match io::stdin().read_line(&mut buf) {
-        Ok(n) => {
-            println!("{} bytes read", n);
-            println!("You enterted {} ", buf);
-        },
-        Err(error) => println!("error: {}", error),
-    }
-
-    Ok(buf)
+fn exit_err<T: Display>(msg: T, code: i32) -> !{
+    let _ = writeln!(&mut io::stderr(), "Error: {}", msg);
+    process::exit(code)
 }
