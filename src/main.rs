@@ -41,11 +41,22 @@ fn main() {
 
     if toss.to_lowercase() == toss_number_type.to_lowercase()
     {
-        println!("You won the toss")
+        println!("You won the toss (Choose Batting or Bowling) !");
+        let _player_choice : String = get_player_input()
+            .unwrap_or_else(|e| exit_err(&e, e.raw_os_error().unwrap_or(-1)))
+            .trim()
+            .parse()
+            .unwrap_or_else(|e| exit_err(&e, 2));
     }
     else
     {
-        println!("I won the toss")
+        let rnd_number : u16 = rand::thread_rng().gen_range(0, 1);
+        match rnd_number {
+            0 => println!("I won the toss and will choose to bowl !"),
+            1 => println!("I won the toss and will choose to bat !"),
+            _ => panic!("A new bug found in random number generator !")
+        }
+        println!("I won the toss (Choose Batting or Bowling) !")
     }
 }
 
