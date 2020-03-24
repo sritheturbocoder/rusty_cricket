@@ -2,11 +2,25 @@ use std::io::{self, Write};
 use std::fmt::Display;
 use std::process;
 use rand::Rng;
+use termion::{color, clear, style, cursor};
 
 fn main() {
-    println!("Fun with HAND CRICKET!");
-    println!("Choose Odd / Even ? (O/E)");
-    
+    println!("{clear} {goto}", 
+            clear = clear::All,
+            goto = cursor::Goto(1,1)
+            );
+    println!("{bold}{red}fun {blue}with {green}rusty {yellow}cricket {reset}",
+            bold  = style::Bold,
+            red   = color::Fg(color::Red),
+            blue  = color::Fg(color::Blue),
+            green = color::Fg(color::Green),
+            yellow = color::Fg(color::LightYellow),
+            reset = color::Fg(color::Reset)
+            );
+    println!("{bold} {lightcyan} Choose Odd / Even ? (O/E)",
+            bold = style::Bold,
+            lightcyan = color::Fg(color::LightMagenta));
+
     let toss : String = get_player_input()
             .unwrap_or_else(|e| exit_err(&e, e.raw_os_error().unwrap_or(-1)))
             .trim()
@@ -41,7 +55,7 @@ fn main() {
 
     if toss.to_lowercase() == toss_number_type.to_lowercase()
     {
-        println!("You won the toss (Choose Batting or Bowling) !");
+        println!("You won the toss (Choose Bat or Bowl) !");
         let _player_choice : String = get_player_input()
             .unwrap_or_else(|e| exit_err(&e, e.raw_os_error().unwrap_or(-1)))
             .trim()
