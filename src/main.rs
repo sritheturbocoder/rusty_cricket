@@ -1,8 +1,7 @@
-use std::io::{self, Write};
-use std::fmt::Display;
-use std::process;
-use rand::Rng;
+pub mod utils;
+
 use termion::{color, clear, style, cursor};
+use std::io;
 
 fn main() {
     println!("{clear} {goto}", 
@@ -22,17 +21,17 @@ fn main() {
             lightcyan = color::Fg(color::LightMagenta));
 
     let toss : String = get_player_input()
-            .unwrap_or_else(|e| exit_err(&e, e.raw_os_error().unwrap_or(-1)))
+            .unwrap_or_else(|e| utils::exit_err(&e, e.raw_os_error().unwrap_or(-1)))
             .trim()
             .parse()
-            .unwrap_or_else(|e| exit_err(&e, 2));
+            .unwrap_or_else(|e| utils::exit_err(&e, 2));
     
     println!("Enter your toss number ");
     let user_toss_number :u16 = get_player_input()
-            .unwrap_or_else(|e| exit_err(&e, e.raw_os_error().unwrap_or(-1)))
+            .unwrap_or_else(|e| utils::exit_err(&e, e.raw_os_error().unwrap_or(-1)))
             .trim()
             .parse()
-            .unwrap_or_else(|e| exit_err(&e, 2));
+            .unwrap_or_else(|e| utils::exit_err(&e, 2));
 
     let my_number : u16 = process_user_input(&toss, user_toss_number);
     println!("My number is {}", my_number);
@@ -57,21 +56,21 @@ fn main() {
     {
         println!("You won the toss (Choose Bat or Bowl) !");
         let _player_choice : String = get_player_input()
-            .unwrap_or_else(|e| exit_err(&e, e.raw_os_error().unwrap_or(-1)))
+            .unwrap_or_else(|e| utils::exit_err(&e, e.raw_os_error().unwrap_or(-1)))
             .trim()
             .parse()
-            .unwrap_or_else(|e| exit_err(&e, 2));
+            .unwrap_or_else(|e| utils::exit_err(&e, 2));
     }
     else
     {
-        let rnd_number : u16 = rand::thread_rng().gen_range(0, 1);
+        let rnd_number : u16 = utils::generate_toss();
         match rnd_number {
             0 => println!("I won the toss and will choose to bowl !"),
             1 => println!("I won the toss and will choose to bat !"),
             _ => panic!("A new bug found in random number generator !")
         }
-        println!("I won the toss (Choose Batting or Bowling) !")
     }
+    let timeout = 4;
 }
 
 fn get_player_input() -> io::Result<String> {
@@ -88,12 +87,12 @@ fn process_user_input(toss : &String, toss_number: u16) -> u16 {
         'o' | 'O' => {
             match toss_number % 2 {
                 0 => panic!("You promised to enter odd..I am smart you can't cheat me !!"),
-                _ => generate_even_number(), // user selected odd so I select some even
+                _ => utils::generate_even_number(), // user selected odd so I select some even
             }
         },
         'e' | 'E' => {
             match toss_number % 2 {
-                0 => generate_odd_number(), // user selected even so I select some odd
+                0 => utils::generate_odd_number(), // user selected even so I select some odd
                 _ => panic!("You promised to enter even but you cheated !!"),
             }
         },
@@ -103,39 +102,3 @@ fn process_user_input(toss : &String, toss_number: u16) -> u16 {
     }
 }
 
-fn generate_odd_number() -> u16 {
-    let generated_odd_number :u16;
-    loop{
-        let odd_number : u16 = rand::thread_rng().gen_range(1, 10);
-        match odd_number % 2 {
-            0 => continue,
-            1 => {
-                   generated_odd_number = odd_number;
-                   break;
-            },
-            _ => panic! ("Discovered something new in Mathematics")
-        }
-    }
-    generated_odd_number
-}
-
-fn generate_even_number() -> u16 {
-    let generated_even_number :u16;
-    loop{
-        let even_number : u16 = rand::thread_rng().gen_range(1, 10);
-        match even_number % 2 {
-            0 => {
-                generated_even_number = even_number;
-                break;
-            },
-            1 => continue,
-            _ => panic! ("Discovered something new in Mathematics")
-        }
-    }
-    generated_even_number
-}
-
-fn exit_err<T: Display>(msg: T, code: i32) -> !{
-    let _ = writeln!(&mut io::stderr(), "Error: {}", msg);
-    process::exit(code)
-}
