@@ -4,6 +4,7 @@ use termion::{color, clear, style, cursor};
 use std::io;
 
 fn main() {
+           
     println!("{clear} {goto}", 
             clear = clear::All,
             goto = cursor::Goto(1,1)
@@ -19,19 +20,6 @@ fn main() {
     println!("{bold} {lightcyan} Choose Odd / Even ? (O/E)",
             bold = style::Bold,
             lightcyan = color::Fg(color::LightMagenta));
-
-    let toss : String = get_player_input()
-            .unwrap_or_else(|e| utils::exit_err(&e, e.raw_os_error().unwrap_or(-1)))
-            .trim()
-            .parse()
-            .unwrap_or_else(|e| utils::exit_err(&e, 2));
-    
-    println!("Enter your toss number ");
-    let user_toss_number :u16 = get_player_input()
-            .unwrap_or_else(|e| utils::exit_err(&e, e.raw_os_error().unwrap_or(-1)))
-            .trim()
-            .parse()
-            .unwrap_or_else(|e| utils::exit_err(&e, 2));
 
     let my_number : u16 = process_user_input(&toss, user_toss_number);
     println!("My number is {}", my_number);

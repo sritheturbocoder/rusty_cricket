@@ -3,6 +3,16 @@ use std::fmt::Display;
 use std::process;
 use rand::Rng;
 
+pub enum PlayerMode {
+    Batting,
+    Bowling
+}
+
+pub enum TossSelection {
+    Odd,
+    Even
+}
+
 pub fn generate_odd_number() -> u16 {
     let generated_odd_number :u16;
     loop{
