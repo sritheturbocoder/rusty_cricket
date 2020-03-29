@@ -9,17 +9,24 @@ pub struct CricketGame{
 
 impl CricketGame{
     pub fn start_game(self){
-        println!("Human status {} overs {} runs {} wickets ", 
+
+        match self.human_player.wontoss
+        {
+            true => println!("Lucky !!, You won the toss !!!"),
+            _ => println!("Haha!!, I won the toss")
+        }
+
+        println!("*** Human *** {} overs {} runs {} wickets {} ", 
         self.human_player.overs, 
         self.human_player.runs, 
-        self.human_player.wickets);
+        self.human_player.wickets,
+        self.human_player.status);
 
-        println!("\n");
-
-        println!("Genie status {} overs {} runs {} wickets ", 
+        println!("*** Genie *** {} overs {} runs {} wickets {} ", 
         self.genie_player.overs, 
         self.genie_player.runs, 
-        self.genie_player.wickets);
+        self.genie_player.wickets,
+        self.genie_player.status);
 
         println!("\n");
     }

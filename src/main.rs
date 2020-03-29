@@ -3,7 +3,7 @@ mod toss;
 mod players;
 mod game;
 
-use std::io::{stdin, stdout};
+use std::io::{stdin};
 use termion::event::Key;
 use termion::input::TermRead;
 
@@ -27,8 +27,7 @@ fn main() -> Result<(), CoinError> {
                         Key::Esc => break,
                         Key::Char('h') => {
                                 if CoinToss::guess("Heads".parse()?).is_correct() {
-                                        println!("Lucky !!, You won the toss");
-                                        
+                                       
                                         genie_player = Some(Genie {
                                                 wontoss : false,
                                                 status : PlayerStatus::Bowling,
@@ -45,8 +44,6 @@ fn main() -> Result<(), CoinError> {
                                                 wickets : 0
                                         });
                                 } else {
-                                        println!("Haha!!, I won the toss");
-                                        
                                         genie_player = Some(Genie {
                                                 wontoss : true,
                                                 status : PlayerStatus::Batting,
@@ -67,7 +64,6 @@ fn main() -> Result<(), CoinError> {
                         }
                         Key::Char('t') => {
                                 if CoinToss::guess("Tails".parse()?).is_correct() {
-                                        println!("Lucky !!, You won the toss");
 
                                         genie_player = Some(Genie {
                                                 wontoss : false,
@@ -86,7 +82,6 @@ fn main() -> Result<(), CoinError> {
                                         });
 
                                 } else {
-                                        println!("Haha!!, I won the toss");
 
                                         genie_player = Some(Genie {
                                                 wontoss : true,
