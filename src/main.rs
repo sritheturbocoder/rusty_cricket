@@ -1,92 +1,216 @@
-pub mod utils;
+mod errors;
+mod toss;
+mod players;
+mod game;
 
-use termion::{color, clear, style, cursor};
-use std::io;
+use std::io::{stdin, stdout, Write};
+use termion::event::Key;
+use termion::input::TermRead;
+use termion::raw::IntoRawMode;
+use termion::{clear, color, cursor, style};
 
-fn main() {
-           
-    println!("{clear} {goto}", 
-            clear = clear::All,
-            goto = cursor::Goto(1,1)
-            );
-    println!("{bold}{red}fun {blue}with {green}rusty {yellow}cricket {reset}",
-            bold  = style::Bold,
-            red   = color::Fg(color::Red),
-            blue  = color::Fg(color::Blue),
-            green = color::Fg(color::Green),
-            yellow = color::Fg(color::LightYellow),
-            reset = color::Fg(color::Reset)
-            );
-    println!("{bold} {lightcyan} Choose Odd / Even ? (O/E)",
-            bold = style::Bold,
-            lightcyan = color::Fg(color::LightMagenta));
+use crate::toss::coin_toss::{CoinError, CoinToss};
+use players::genie::{Genie};
+use players::human::{Human};
+use players::utils::{PlayerStatus};
+use game::CricketGame;
 
-    let my_number : u16 = process_user_input(&toss, user_toss_number);
-    println!("My number is {}", my_number);
+fn main() -> Result<(), CoinError> {
+        let stdin = stdin();
+        let mut stdout = stdout().into_raw_mode().unwrap();
+        
+        write!(
+                stdout,
+                "{}{}{}{bold}{red}fun {blue}with {green}rusty {yellow}cricket",
+                clear::All,
+                cursor::Goto(1,1),
+                cursor::Hide,
+                bold = style::Bold,
+                red = color::Fg(color::Red),
+                blue = color::Fg(color::Blue),
+                green = color::Fg(color::Green),
+                yellow = color::Fg(color::LightYellow)
+        )
+        .unwrap();
 
-    let addnumbers : u16 = user_toss_number + my_number;
-    println!("Added number is {} ", addnumbers);
-    let toss_number_type : String;
-    
-    match addnumbers %2 {
-        0 => {
-               toss_number_type = String::from("E");
-               println!("Toss number is even")
-        },
-        1 => {
-              toss_number_type = String::from("O");
-              println!("Toss number is odd")
+        writeln!(
+                stdout,
+                "{}",
+                cursor::Goto(1,2)
+        )
+        .unwrap();
+
+        writeln!(
+                stdout,
+                "ESC or q to exit. Let's toss ******** Heads or Tails ********"
+        )
+        .unwrap();
+
+        stdout.flush().unwrap();
+
+        let mut lineno : u16 = 2;
+        let mut genie_player : Option<Genie> = None;
+        let mut human_player : Option<Human> = None;
+
+        for c in stdin.keys() {
+                lineno = lineno + 1;
+                write!(
+                        stdout,
+                        "{}{}",
+                        cursor::Goto(1, lineno),
+                        clear::CurrentLine
+                )
+                .unwrap();
+                lineno = lineno + 1;
+                match c.unwrap() {
+                        Key::Char('q') => break,
+                        Key::Esc => break,
+                        Key::Char('h') => {
+                                if CoinToss::guess("Heads".parse()?).is_correct() {
+                                        write!(
+                                                stdout,
+                                                "{}{}{}",
+                                                cursor::Goto(1, lineno),
+                                                clear::CurrentLine,
+                                                "Fate loves you"
+                                        ).unwrap();
+                                        
+                                        genie_player = Some(Genie {
+                                                wontoss : false,
+                                                status : PlayerStatus::Bowling,
+                                                overs : 0,
+                                                runs : 0,
+                                                wickets : 0
+                                        });
+
+                                        human_player = Some(Human {
+                                                wontoss : true,
+                                                status : PlayerStatus::Batting,
+                                                overs : 0,
+                                                runs : 0,
+                                                wickets : 0
+                                        });
+                                } else {
+                                        write!(
+                                                stdout,
+                                                "{}{}{}",
+                                                cursor::Goto(1, lineno),
+                                                clear::CurrentLine,
+                                                "Not so lucky"
+                                        ).unwrap();
+                                        
+                                        genie_player = Some(Genie {
+                                                wontoss : true,
+                                                status : PlayerStatus::Batting,
+                                                overs : 0,
+                                                runs : 0,
+                                                wickets : 0
+                                        });
+
+                                        human_player = Some(Human {
+                                                wontoss : false,
+                                                status : PlayerStatus::Bowling,
+                                                overs : 0,
+                                                runs : 0,
+                                                wickets : 0
+                                        });
+                                }
+                                break;
+                        }
+                        Key::Char('t') => {
+                                if CoinToss::guess("Tails".parse()?).is_correct() {
+                                        write!(
+                                                stdout,
+                                                "{}{}{}",
+                                                cursor::Goto(1, lineno),
+                                                clear::CurrentLine,
+                                                "Fate loves you"
+                                        ).unwrap();
+
+                                        genie_player = Some(Genie {
+                                                wontoss : false,
+                                                status : PlayerStatus::Bowling,
+                                                overs : 0,
+                                                runs : 0,
+                                                wickets : 0
+                                        });
+
+                                        human_player = Some(Human {
+                                                wontoss : true,
+                                                status : PlayerStatus::Batting,
+                                                overs : 0,
+                                                runs : 0,
+                                                wickets : 0
+                                        });
+
+                                } else {
+                                        write!(
+                                                stdout,
+                                                "{}{}{}",
+                                                cursor::Goto(1, lineno),
+                                                clear::CurrentLine,
+                                                "Not so lucky"
+                                        ).unwrap();
+
+                                        genie_player = Some(Genie {
+                                                wontoss : true,
+                                                status : PlayerStatus::Batting,
+                                                overs : 0,
+                                                runs : 0,
+                                                wickets : 0
+                                        });
+
+                                        human_player = Some(Human {
+                                                wontoss : false,
+                                                status : PlayerStatus::Bowling,
+                                                overs : 0,
+                                                runs : 0,
+                                                wickets : 0
+                                        });
+
+                                }
+                                break;
+                        }
+                        _ => {
+                                write!(
+                                        stdout,
+                                        "{}{}{}",
+                                        cursor::Goto(1, lineno),
+                                        clear::CurrentLine,
+                                        "Invalid choice, Try Again Head or Tail ?"
+                                ).unwrap();
+                                lineno = lineno + 1;
+                                continue;
+                        }
+                }
         }
-        _ => panic!("Some new problem in mathematics !!!")
-    }
 
-    if toss.to_lowercase() == toss_number_type.to_lowercase()
-    {
-        println!("You won the toss (Choose Bat or Bowl) !");
-        let _player_choice : String = get_player_input()
-            .unwrap_or_else(|e| utils::exit_err(&e, e.raw_os_error().unwrap_or(-1)))
-            .trim()
-            .parse()
-            .unwrap_or_else(|e| utils::exit_err(&e, 2));
-    }
-    else
-    {
-        let rnd_number : u16 = utils::generate_toss();
-        match rnd_number {
-            0 => println!("I won the toss and will choose to bowl !"),
-            1 => println!("I won the toss and will choose to bat !"),
-            _ => panic!("A new bug found in random number generator !")
+        stdout.flush().unwrap();
+        // Show the cursor again before we exit.
+        write!(stdout, "{}", termion::cursor::Show).unwrap();
+        
+        println!("{}{}{}{}",
+                clear::All,
+                cursor::Goto(1,1),
+                cursor::Show,
+                color::Fg(color::Reset)
+        );
+
+        if let Some(human_player) = human_player
+        {
+                if let Some(genie_player) = genie_player
+                {
+                        let game : CricketGame = CricketGame {
+                                innings : 1,
+                                human_player : human_player,
+                                genie_player : genie_player,
+                                max_overs : 10
+                        };
+                
+                        game.start_game();
+
+                }
         }
-    }
-    let timeout = 4;
-}
 
-fn get_player_input() -> io::Result<String> {
-    let mut buf = String::new();
-    match io::stdin().read_line(&mut buf) {
-        Ok(_n) => {},
-        Err(error) => println!("error: {}", error),
-    }
-    Ok(buf)
+        Ok(())
 }
-
-fn process_user_input(toss : &String, toss_number: u16) -> u16 {
-    match toss.chars().next().unwrap()  {
-        'o' | 'O' => {
-            match toss_number % 2 {
-                0 => panic!("You promised to enter odd..I am smart you can't cheat me !!"),
-                _ => utils::generate_even_number(), // user selected odd so I select some even
-            }
-        },
-        'e' | 'E' => {
-            match toss_number % 2 {
-                0 => utils::generate_odd_number(), // user selected even so I select some odd
-                _ => panic!("You promised to enter even but you cheated !!"),
-            }
-        },
-        _ => {
-            panic!("Invalid input...please enter O or E")
-        }
-    }
-}
-
