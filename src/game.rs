@@ -1,4 +1,4 @@
-use crate::players::{human, genie};
+use crate::players::{human, genie,utils};
 
 pub struct CricketGame{
     pub innings : u8,
@@ -10,11 +10,7 @@ pub struct CricketGame{
 impl CricketGame{
     pub fn start_game(self){
 
-        match self.human_player.wontoss
-        {
-            true => println!("Lucky !!, You won the toss !!!"),
-            _ => println!("Haha!!, I won the toss")
-        }
+        if self.human_player.wontoss { println!("Lucky !!, You won the toss !!!") } else { println!("Haha!!, I won the toss") }
 
         println!("*** Human *** {} overs {} runs {} wickets {} ", 
         self.human_player.overs, 
@@ -29,6 +25,11 @@ impl CricketGame{
         self.genie_player.status);
 
         println!("\n");
+
+        match self.human_player.status{
+            utils::PlayerStatus::Batting => println!("Game starts..Start batting now"),
+            utils::PlayerStatus::Bowling => println!("Game starts..Start bowling now")
+        }
     }
 }
 

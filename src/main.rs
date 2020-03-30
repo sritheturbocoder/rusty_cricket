@@ -115,8 +115,8 @@ fn main() -> Result<(), CoinError> {
                 {
                         let game : CricketGame = CricketGame {
                                 innings : 1,
-                                human_player : human_player,
-                                genie_player : genie_player,
+                                human_player,
+                                genie_player,
                                 max_overs : 10
                         };
                 
