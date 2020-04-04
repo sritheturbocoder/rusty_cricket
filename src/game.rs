@@ -3,14 +3,12 @@ use crate::players::*;
 use crate::game;
 use std::time::Duration;
 use std::thread::sleep;
-use std::io::{self, Write};
+use std::io::{Write};
 use rand::Rng;
 
 use crossterm::{
     cursor,
-    execute, queue, style,
-    terminal::{self, ClearType},
-    event::{read, Event, KeyCode},
+    queue, style,
     Result,
 };
 
@@ -136,7 +134,7 @@ impl CricketGame{
                 duration_remaining -= 1;
             }
 
-            queue!(w, style::Print(bat), cursor::MoveToNextLine(1))?;
+            queue!(w, style::Print(bat), cursor::MoveToNextLine(1))?;   
             w.flush()?;
 
             duration_remaining = 1;
@@ -144,12 +142,9 @@ impl CricketGame{
                 game::CricketGame::countdown_one_second_from(w, &duration_remaining, false).ok();
                 duration_remaining -= 1;
             }
-
             break;
         }
-
         w.flush()?;
-                    
         Ok(())
     }
 
@@ -163,12 +158,9 @@ impl CricketGame{
                 queue!(w, style::Print(ball))?;
                 w.flush()?;
             }
-
             sleep(quarter_of_second);
         }
-
         w.flush()?;
-
         Ok(())
     }
 }
