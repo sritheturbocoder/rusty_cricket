@@ -109,42 +109,4 @@ impl CricketGame{
             }
         }
     }
-
-    pub fn start(&self) {
-
-        let bat = "🏏"; 
-        let ball = "🏮";
-        let four = "🎯";
-        let six = "Maximum !!! 🎳";
-        let hundred = "💯";
-
-        let mut duration_remaining = rand::thread_rng().gen_range(2,10);
-        while duration_remaining > 0 {
-            self.countdown_one_second_from(&duration_remaining, true);
-            duration_remaining -= 1;
-        }
-
-        print!("{}", Red.bold().paint(bat));
-        
-
-        duration_remaining = 1;
-        while duration_remaining > 0 {
-            self.countdown_one_second_from(&duration_remaining, false);
-            duration_remaining -= 1;
-        }
-
-        println!("\n");
-
-        println!("Next ball coming through !!!");
-    }
-
-    fn countdown_one_second_from(&self, start_second: &usize, showball : bool) {
-        let quarter_of_second = Duration::from_millis(250);
-        let ball = "🏮";
-        for _ in 0..3 {
-            if showball { print!("{}", Red.bold().paint(ball)) }
-            io::stdout().flush().unwrap();
-            sleep(quarter_of_second);
-        }
-    }
 }
