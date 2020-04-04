@@ -1,37 +1,116 @@
 extern crate ansi_term;
-
 use ansi_term::Colour::*;
-use crate::players::{human, genie,utils};
+use crate::players::*;
+use crate::game;
 use std::time::Duration;
 use std::thread::sleep;
 use std::io::{self, Write};
 use rand::Rng;
 
+#[derive(Clone, Copy)]
+pub enum TossWonBy {
+    Human,
+    Genie
+}
+
 pub struct CricketGame{
     pub innings : u8,
+    pub max_overs : u8,
+    pub toss_won_by : TossWonBy,
+    pub toss_decision : utils::PlayerStatus,
     pub human_player : human::Human,
     pub genie_player : genie::Genie,
-    pub max_overs : u8,
 }
 
 impl CricketGame{
-    pub fn start_game(self){
 
-        if self.human_player.wontoss { println!("Lucky !!, You won the toss !!!") } else { println!("Haha!!, I won the toss") }
+    pub fn new(toss_won_by : TossWonBy, toss_decision : utils::PlayerStatus) ->CricketGame {
 
-        println!("*** Human *** {} overs {} runs {} wickets {} ", 
-        self.human_player.overs, 
-        self.human_player.runs, 
-        self.human_player.wickets,
-        self.human_player.status);
+        match toss_won_by {
+            game::TossWonBy::Human => {
+                match toss_decision {
+                   utils::PlayerStatus::Batting => CricketGame{
+                        innings : 0,
+                        max_overs : 10,
+                        toss_won_by : toss_won_by,
+                        toss_decision : toss_decision,
+                        human_player : human::Human {
+                            overs : 10,
+                            runs : 0,
+                            status : utils::PlayerStatus::Batting,
+                            wickets : 11,
+                        },
+                        genie_player : genie::Genie{
+                            overs : 10,
+                            runs : 0,
+                            status : utils::PlayerStatus::Bowling,
+                            wickets : 11,
+                        }
+                    },
+                    utils::PlayerStatus::Bowling => CricketGame{
+                        innings : 0,
+                        max_overs : 10,
+                        toss_won_by : toss_won_by,
+                        toss_decision : toss_decision,
+                        human_player : human::Human {
+                            overs : 10,
+                            runs : 0,
+                            status : utils::PlayerStatus::Bowling,
+                            wickets : 11,
+                        },
+                        genie_player : genie::Genie{
+                            overs : 10,
+                            runs : 0,
+                            status : utils::PlayerStatus::Batting,
+                            wickets : 11,
+                        }
+                    },
+                }
+            },
+            game::TossWonBy::Genie => {
+                match toss_decision {
+                    utils::PlayerStatus::Batting => CricketGame{
+                        innings : 0,
+                        max_overs : 10,
+                        toss_won_by : toss_won_by,
+                        toss_decision : toss_decision,
+                        human_player : human::Human {
+                            overs : 10,
+                            runs : 0,
+                            status : utils::PlayerStatus::Bowling,
+                            wickets : 11,
+                        },
+                        genie_player : genie::Genie{
+                            overs : 10,
+                            runs : 0,
+                            status : utils::PlayerStatus::Batting,
+                            wickets : 11,
+                        }
+                    },
+                    utils::PlayerStatus::Bowling => CricketGame{
+                        innings : 0,
+                        max_overs : 10,
+                        toss_won_by : toss_won_by,
+                        toss_decision : toss_decision,
+                        human_player : human::Human {
+                            overs : 10,
+                            runs : 0,
+                            status : utils::PlayerStatus::Batting,
+                            wickets : 11,
+                        },
+                        genie_player : genie::Genie{
+                            overs : 10,
+                            runs : 0,
+                            status : utils::PlayerStatus::Bowling,
+                            wickets : 11,
+                        }
+                    },
+                }
+            }
+        }
+    }
 
-        println!("*** Genie *** {} overs {} runs {} wickets {} ", 
-        self.genie_player.overs, 
-        self.genie_player.runs, 
-        self.genie_player.wickets,
-        self.genie_player.status);
-
-        println!("\n");
+    pub fn start(&self) {
 
         let bat = "🏏"; 
         let ball = "🏮";
@@ -39,17 +118,7 @@ impl CricketGame{
         let six = "Maximum !!! 🎳";
         let hundred = "💯";
 
-        match self.human_player.status{
-            utils::PlayerStatus::Batting => println!("Game starts..Start batting now"),
-            utils::PlayerStatus::Bowling => println!("Game starts..Start bowling now")
-        }
-
-        self.start();
-    }
-
-    pub fn start(&self) {
         let mut duration_remaining = rand::thread_rng().gen_range(2,10);
-        let bat = "🏏"; 
         while duration_remaining > 0 {
             self.countdown_one_second_from(&duration_remaining, true);
             duration_remaining -= 1;
@@ -66,7 +135,7 @@ impl CricketGame{
 
         println!("\n");
 
-        println!("{}", "Next ball coming through !!!");
+        println!("Next ball coming through !!!");
     }
 
     fn countdown_one_second_from(&self, start_second: &usize, showball : bool) {
@@ -79,4 +148,3 @@ impl CricketGame{
         }
     }
 }
-

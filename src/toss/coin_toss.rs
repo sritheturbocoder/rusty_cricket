@@ -1,7 +1,6 @@
 use crate::errors::errorhandler::{ErrorCode, BASE_COIN_TOSS_ERROR_CODE};
 
 use core::fmt;
-
 use rand::Rng;
 
 /// Error raised by Coin Toss
@@ -33,6 +32,7 @@ impl ErrorCode for CoinError {
             }
     }
 }
+
 
 /// Enum representing a coin
 #[derive(
@@ -79,13 +79,15 @@ impl Into<bool> for CoinToss {
 }
 
 impl core::str::FromStr for Coin {
-    type Err = CoinError;
+    type Err = crossterm::ErrorKind;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let guess = s.to_ascii_lowercase();
         if ["heads", "h", "t", "tails"].contains(&guess.as_str()) {
             Ok(Coin::from(guess.starts_with('h')))
-        } else {
-            Err(CoinError::InvalidSideError)
+        } 
+        else
+        {
+            Err(crossterm::ErrorKind::__Nonexhaustive)
         }
     }
 }
