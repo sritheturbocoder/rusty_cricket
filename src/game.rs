@@ -1,11 +1,16 @@
 extern crate ansi_term;
-use ansi_term::Colour::*;
 use crate::players::*;
 use crate::game;
 use std::time::Duration;
 use std::thread::sleep;
-use std::io::{self, Write};
+use std::io::{Write};
 use rand::Rng;
+
+use crossterm::{
+    cursor,
+    queue, style,
+    Result,
+};
 
 #[derive(Clone, Copy)]
 pub enum TossWonBy {
@@ -108,5 +113,54 @@ impl CricketGame{
                 }
             }
         }
+    }
+
+    pub fn start<W>(self, w: &mut W) -> Result<()> 
+    where
+    W: Write,{
+
+        let bat = "🏏"; 
+        let ball = "🏮";
+        let four = "🎯";
+        let six = "Maximum !!! 🎳";
+        let hundred = "💯";
+
+        loop {
+        
+            let mut duration_remaining = rand::thread_rng().gen_range(3,6);
+
+            while duration_remaining > 0 {
+                game::CricketGame::countdown_one_second_from(w, &duration_remaining, true).ok();
+                duration_remaining -= 1;
+            }
+
+            queue!(w, style::Print(bat), cursor::MoveToNextLine(1))?;   
+            w.flush()?;
+
+            duration_remaining = 1;
+            while duration_remaining > 0 {
+                game::CricketGame::countdown_one_second_from(w, &duration_remaining, false).ok();
+                duration_remaining -= 1;
+            }
+            break;
+        }
+        w.flush()?;
+        Ok(())
+    }
+
+    pub fn countdown_one_second_from<W>(w: &mut W, start_second: &usize, showball : bool) -> Result<()> 
+    where
+    W: Write,{
+        let quarter_of_second = Duration::from_millis(250);
+        let ball = "🏮";
+        for _ in 0..*start_second as i64 {
+            if showball {
+                queue!(w, style::Print(ball))?;
+                w.flush()?;
+            }
+            sleep(quarter_of_second);
+        }
+        w.flush()?;
+        Ok(())
     }
 }
