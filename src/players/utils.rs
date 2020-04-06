@@ -14,6 +14,14 @@ pub enum PlayerStatus {
     Bowling
 }
 
+#[derive(Clone, Copy)]
+pub enum GameStatus {
+    InProgress,
+    Won,
+    Loss,
+    Draw,    
+}
+
 impl fmt::Display for PlayerStatus {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
