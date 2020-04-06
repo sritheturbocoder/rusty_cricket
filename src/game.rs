@@ -19,8 +19,6 @@ pub enum TossWonBy {
 }
 
 pub struct CricketGame{
-    pub innings : u8,
-    pub max_overs : u8,
     pub toss_won_by : TossWonBy,
     pub toss_decision : utils::PlayerStatus,
     pub human_player : human::Human,
@@ -35,39 +33,35 @@ impl CricketGame{
             game::TossWonBy::Human => {
                 match toss_decision {
                    utils::PlayerStatus::Batting => CricketGame{
-                        innings : 0,
-                        max_overs : 10,
                         toss_won_by : toss_won_by,
                         toss_decision : toss_decision,
                         human_player : human::Human {
-                            overs : 10,
                             runs : 0,
                             status : utils::PlayerStatus::Batting,
                             wickets : 11,
+                            won_game : utils::GameStatus::InProgress
                         },
                         genie_player : genie::Genie{
-                            overs : 10,
                             runs : 0,
                             status : utils::PlayerStatus::Bowling,
                             wickets : 11,
+                            won_game : utils::GameStatus::InProgress
                         }
                     },
                     utils::PlayerStatus::Bowling => CricketGame{
-                        innings : 0,
-                        max_overs : 10,
                         toss_won_by : toss_won_by,
                         toss_decision : toss_decision,
                         human_player : human::Human {
-                            overs : 10,
                             runs : 0,
                             status : utils::PlayerStatus::Bowling,
                             wickets : 11,
+                            won_game : utils::GameStatus::InProgress
                         },
                         genie_player : genie::Genie{
-                            overs : 10,
                             runs : 0,
                             status : utils::PlayerStatus::Batting,
                             wickets : 11,
+                            won_game : utils::GameStatus::InProgress
                         }
                     },
                 }
@@ -75,39 +69,35 @@ impl CricketGame{
             game::TossWonBy::Genie => {
                 match toss_decision {
                     utils::PlayerStatus::Batting => CricketGame{
-                        innings : 0,
-                        max_overs : 10,
                         toss_won_by : toss_won_by,
                         toss_decision : toss_decision,
                         human_player : human::Human {
-                            overs : 10,
                             runs : 0,
                             status : utils::PlayerStatus::Bowling,
                             wickets : 11,
+                            won_game : utils::GameStatus::InProgress
                         },
                         genie_player : genie::Genie{
-                            overs : 10,
                             runs : 0,
                             status : utils::PlayerStatus::Batting,
                             wickets : 11,
+                            won_game : utils::GameStatus::InProgress
                         }
                     },
                     utils::PlayerStatus::Bowling => CricketGame{
-                        innings : 0,
-                        max_overs : 10,
                         toss_won_by : toss_won_by,
                         toss_decision : toss_decision,
                         human_player : human::Human {
-                            overs : 10,
                             runs : 0,
                             status : utils::PlayerStatus::Batting,
                             wickets : 11,
+                            won_game : utils::GameStatus::InProgress
                         },
                         genie_player : genie::Genie{
-                            overs : 10,
                             runs : 0,
                             status : utils::PlayerStatus::Bowling,
                             wickets : 11,
+                            won_game : utils::GameStatus::InProgress
                         }
                     },
                 }
