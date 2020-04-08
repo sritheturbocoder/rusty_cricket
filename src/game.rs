@@ -110,6 +110,7 @@ impl CricketGame{
     pub fn start<W>(&self, w: &mut W) -> Result<()> 
     where
     W: Write,{
+        let bat = "🏏"; 
         let four = "🎯";
         let six = "Maximum !!! 🎳";
         let hundred = "💯";
@@ -124,7 +125,6 @@ impl CricketGame{
                 utils::PlayerStatus::Bowling => {
                     queue!(w, style::Print("Guess Batsman score (0-6) "), cursor::MoveToNextLine(1))?;
                     let runs_predict = read()?;
-
                     if runs_predict == Event::Key(KeyCode::Char('0').into()) {
                         human_prediction = 0;
                     }
@@ -159,8 +159,18 @@ impl CricketGame{
                 }
             }
 
-            CricketGame::bowl(&self,w);
-            break; // to bat
+            match CricketGame::bowl(&self,w) {
+                Ok(()) => {
+                    queue!(w, style::Print(bat), cursor::MoveToNextLine(1))?;   
+                    w.flush()?;
+                },
+                Err(e) => {
+                    panic!(e)
+                }
+            }
+    
+            CricketGame::bat(&self);
+            break;
 
         }
 
@@ -181,18 +191,26 @@ impl CricketGame{
         Ok(())
     }
 
-    fn bat<W>(&self, w: &mut W) -> Result<()>
-    where W: Write{
-        let bat = "🏏"; 
-        queue!(w, style::Print(bat), cursor::MoveToNextLine(1))?;   
-        w.flush()?;
-        let mut duration_remaining : u8 = 2;
-        while duration_remaining > 0 {
-            game::CricketGame::countdown_one_second_from(w, &duration_remaining, false).ok();
-            duration_remaining -= 1;
-        }
+    fn bat(&self) -> Result<Event> 
+    {
+        match self.human_player.status {
+            utils::PlayerStatus::Batting => {
+                Ok(read()?)
+            },
 
-        Ok(())
+            utils::PlayerStatus::Bowling => {
+                match rand::thread_rng().gen_range(0,6) {
+                    0 => Ok(Event::Key(KeyCode::Char('0').into())),
+                    1 => Ok(Event::Key(KeyCode::Char('1').into())),
+                    2 => Ok(Event::Key(KeyCode::Char('2').into())),
+                    3 => Ok(Event::Key(KeyCode::Char('3').into())),
+                    4 => Ok(Event::Key(KeyCode::Char('4').into())),
+                    5 => Ok(Event::Key(KeyCode::Char('5').into())),
+                    6 => Ok(Event::Key(KeyCode::Char('6').into())),
+                    _ => Err(crossterm::ErrorKind::__Nonexhaustive),
+                }
+            }
+        }
     }
 
     pub fn countdown_one_second_from<W>(w: &mut W, start_second: &u8, showball : bool) -> Result<()> 
