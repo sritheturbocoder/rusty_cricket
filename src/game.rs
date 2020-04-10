@@ -1,6 +1,6 @@
 use crate::errors::errorhandler::ErrorCode;
 use crate::players::utils::{GameStatus, PlayerStatus};
-use crate::players::{human,genie};
+use crate::players::{genie, human};
 use crate::umpire;
 use crossterm::{
     cursor,
@@ -211,51 +211,35 @@ impl CricketGame {
                 Err(e) => panic!(e),
             }
 
-            let mut runs_scored : u16 = 0;
+            let mut runs_scored: u16 = 0;
             match CricketGame::bat(self.human_player.status).unwrap() {
                 0..=6 => {
                     runs_scored = CricketGame::bat(self.human_player.status).unwrap();
-                },
+                }
                 _ => {
                     runs_scored = 0;
                 }
             }
 
             match self.human_player.status {
-                PlayerStatus::Batting | PlayerStatus::Bowling  => {
+                PlayerStatus::Batting | PlayerStatus::Bowling => {
                     match ScoreBoard::score(runs_scored, genie_prediction, self) {
                         Ok(GameStatus::InProgress) => {
                             ScoreBoard::print_score(w, self);
                             continue;
-                        },
+                        }
 
-                        Ok(GameStatus::GameOver) => {
+                        Ok(GameStatus::GameOver)
+                        | Ok(GameStatus::Won)
+                        | Ok(GameStatus::Loss)
+                        | Ok(GameStatus::Draw)
+                        | Err(_) => {
                             ScoreBoard::print_score(w, self);
                             break;
-                        },
-
-                        Ok(GameStatus::Won) => {
-                            ScoreBoard::print_score(w, self);
-                            break;
-                        },
-
-                        Ok(GameStatus::Loss) => {
-                            ScoreBoard::print_score(w, self);
-                            break;
-                        },
-
-                        Ok(GameStatus::Draw) => {
-                            ScoreBoard::print_score(w, self);
-                            break;
-                        },
-
-                        Err(_) => {
-                            ScoreBoard::print_score(w, self);
-                            break;
-                        },
+                        }
                     }
-                },
-            }          
+                }
+            }
         }
 
         Ok(())
@@ -352,27 +336,28 @@ impl ScoreBoard {
         {
             cricket_game.score_board.innings = 2;
         }
-        
         ScoreBoard::declare_winner(cricket_game)
     }
 
     fn declare_winner(cricket_game: &mut CricketGame) -> Result<GameStatus> {
-        if cricket_game.human_player.runs > cricket_game.genie_player.runs {
-            cricket_game.human_player.won_game = GameStatus::Won;
-            cricket_game.genie_player.won_game = GameStatus::Loss;
-            return Ok(GameStatus::GameOver);
-        }
+        if cricket_game.score_board.innings == 2 {
+            if cricket_game.human_player.runs > cricket_game.genie_player.runs {
+                cricket_game.human_player.won_game = GameStatus::Won;
+                cricket_game.genie_player.won_game = GameStatus::Loss;
+                return Ok(GameStatus::GameOver);
+            }
 
-        if cricket_game.genie_player.runs > cricket_game.human_player.runs {
-            cricket_game.genie_player.won_game = GameStatus::Won;
-            cricket_game.human_player.won_game = GameStatus::Loss;
-            return Ok(GameStatus::GameOver);
-        }
+            if cricket_game.genie_player.runs > cricket_game.human_player.runs {
+                cricket_game.genie_player.won_game = GameStatus::Won;
+                cricket_game.human_player.won_game = GameStatus::Loss;
+                return Ok(GameStatus::GameOver);
+            }
 
-        if cricket_game.genie_player.runs == cricket_game.human_player.runs {
-            cricket_game.genie_player.won_game = GameStatus::Draw;
-            cricket_game.human_player.won_game = GameStatus::Draw;
-            return Ok(GameStatus::Draw);
+            if cricket_game.genie_player.runs == cricket_game.human_player.runs {
+                cricket_game.genie_player.won_game = GameStatus::Draw;
+                cricket_game.human_player.won_game = GameStatus::Draw;
+                return Ok(GameStatus::Draw);
+            }
         }
 
         Ok(GameStatus::InProgress)
