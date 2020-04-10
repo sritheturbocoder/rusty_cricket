@@ -19,7 +19,8 @@ pub enum GameStatus {
     InProgress,
     Won,
     Loss,
-    Draw,    
+    Draw,
+    GameOver,
 }
 
 impl fmt::Display for PlayerStatus {

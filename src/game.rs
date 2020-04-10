@@ -1,4 +1,6 @@
 use crate::players::*;
+use crate::errors::errorhandler::ErrorCode;
+use crate::umpire;
 use std::time::Duration;
 use std::thread::sleep;
 use std::io::{Write};
@@ -30,7 +32,7 @@ pub enum TossWonBy {
 
 pub struct ScoreBoard {
     pub innings : u8,
-    pub max_overs : u8,
+    pub max_overs : u16,
     pub balls : u16,
 }
 
@@ -44,12 +46,11 @@ pub struct CricketGame{
 
 impl CricketGame{
 
-    pub fn new(toss_won_by : TossWonBy, toss_decision : utils::PlayerStatus) ->CricketGame {
-
+    pub fn new(toss_won_by : TossWonBy, toss_decision : utils::PlayerStatus) -> CricketGame  {
         match toss_won_by {
             TossWonBy::Human => {
                 match toss_decision {
-                   utils::PlayerStatus::Batting => CricketGame{
+                    utils::PlayerStatus::Batting => return CricketGame {
                         toss_won_by : toss_won_by,
                         toss_decision : toss_decision,
                         human_player : human::Human {
@@ -63,9 +64,14 @@ impl CricketGame{
                             status : utils::PlayerStatus::Bowling,
                             wickets : 11,
                             won_game : utils::GameStatus::InProgress
-                        }
+                        },
+                        score_board : ScoreBoard {
+                            balls :0,
+                            innings :1,
+                            max_overs :10,
+                        },
                     },
-                    utils::PlayerStatus::Bowling => CricketGame{
+                    utils::PlayerStatus::Bowling => return CricketGame {
                         toss_won_by : toss_won_by,
                         toss_decision : toss_decision,
                         human_player : human::Human {
@@ -79,13 +85,19 @@ impl CricketGame{
                             status : utils::PlayerStatus::Batting,
                             wickets : 11,
                             won_game : utils::GameStatus::InProgress
+                        },
+                        score_board : ScoreBoard {
+                            balls :0,
+                            innings :1,
+                            max_overs :10
                         }
                     },
-                }
+                };
             },
+
             TossWonBy::Genie => {
                 match toss_decision {
-                    utils::PlayerStatus::Batting => CricketGame{
+                    utils::PlayerStatus::Batting => return CricketGame{
                         toss_won_by : toss_won_by,
                         toss_decision : toss_decision,
                         human_player : human::Human {
@@ -99,9 +111,14 @@ impl CricketGame{
                             status : utils::PlayerStatus::Batting,
                             wickets : 11,
                             won_game : utils::GameStatus::InProgress
-                        }
+                        },
+                        score_board : ScoreBoard {
+                            balls :0,
+                            innings :1,
+                            max_overs :10
+                        },
                     },
-                    utils::PlayerStatus::Bowling => CricketGame{
+                    utils::PlayerStatus::Bowling => return CricketGame{
                         toss_won_by : toss_won_by,
                         toss_decision : toss_decision,
                         human_player : human::Human {
@@ -115,10 +132,15 @@ impl CricketGame{
                             status : utils::PlayerStatus::Bowling,
                             wickets : 11,
                             won_game : utils::GameStatus::InProgress
-                        }
+                        },
+                        score_board : ScoreBoard {
+                            balls :0,
+                            innings :1,
+                            max_overs :10
+                        },
                     },
-                }
-            }
+                };
+            }       
         }
     }
 
@@ -254,25 +276,10 @@ impl CricketGame{
     }
 }
 
-
-#[derive(::failure::Fail)]
-pub enum GameError {
-    GameOver,
-}
-
-impl ErrorCode for GameError {
-    fn error_code(&self) -> i32 {
-        BASE_GAME_ERROR_CODE
-            + match *self {
-                GameError::GameOver => 1
-            }
-    }
-}
-
 impl ScoreBoard {
-    pub fn score(self, human_score : u16 , genie_score : u16, &mut cricket_game : CricketGame) -> Result<Self, Self::Err> {
-        type Err = GameError;
-        match self.game.human_player.status {
+    pub fn score(human_score : u16 , genie_score : u16, cricket_game : &mut CricketGame) -> Result<utils::GameStatus> 
+    {
+        match cricket_game.human_player.status {
             utils::PlayerStatus::Batting => {
                 if human_score == genie_score {
                     cricket_game.human_player.wickets = cricket_game.human_player.wickets + 1;
@@ -290,42 +297,42 @@ impl ScoreBoard {
                 }
             }
         }
-        self.balls += 1;
+        cricket_game.score_board.balls += 1;
         
-        if self.max_overs * 6 == self.balls && self.innings == 2 { 
-            ScoreBoard::declare_winner(&mut cricket_game);
+        if cricket_game.score_board.max_overs * 6 == cricket_game.score_board.balls && cricket_game.score_board.innings == 1 {
+            cricket_game.score_board.innings = 2;
         }
-
-        ScoreBoard::declare_winner(&mut cricket_game);
+        
+        ScoreBoard::declare_winner(cricket_game)
     }
 
-    fn declare_winner(&mut cricket_game : CricketGame) -> Result<Self, Self::Err> {
-
+    fn declare_winner(cricket_game : &mut CricketGame) -> Result<utils::GameStatus> {
         if cricket_game.human_player.runs > cricket_game.genie_player.runs {
             cricket_game.human_player.won_game = utils::GameStatus::Won;
             cricket_game.genie_player.won_game = utils::GameStatus::Loss;
-            Err(BASE_GAME_OVER_CODE);
+            return Ok(utils::GameStatus::GameOver);
         }
 
         if cricket_game.genie_player.runs > cricket_game.human_player.runs {
             cricket_game.genie_player.won_game = utils::GameStatus::Won;
             cricket_game.human_player.won_game = utils::GameStatus::Loss;
-            Err(BASE_GAME_OVER_CODE);
+            return Ok(utils::GameStatus::GameOver);
         }
 
         if cricket_game.genie_player.runs == cricket_game.human_player.runs {
             cricket_game.genie_player.won_game = utils::GameStatus::Draw;
             cricket_game.human_player.won_game = utils::GameStatus::Draw;
-            Err(BASE_GAME_OVER_CODE);
+            return Ok(utils::GameStatus::Draw);
         }
 
-        Ok(());
+        Ok(utils::GameStatus::InProgress)
     }
 
-    pub fn print_score<W>(&self, w : &mut W ,cric_game : &CricketGame) -> Result<()> 
+    pub fn print_score<W>(w : &mut W ,cric_game : &CricketGame) -> Result<()> 
     where
     W: Write,{
         queue!(w, style::Print("Genie is "), style::Print(cric_game.genie_player.status), cursor::MoveToNextLine(1))?;
         w.flush();
+        Ok(())
     }
 }
