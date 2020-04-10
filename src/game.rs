@@ -1,221 +1,312 @@
-extern crate ansi_term;
-use crate::players::*;
-use crate::game;
-use std::time::Duration;
-use std::thread::sleep;
-use std::io::{Write};
-use rand::Rng;
-
+use crate::errors::errorhandler::ErrorCode;
+use crate::players::utils::{GameStatus, PlayerStatus};
+use crate::players::{human,genie};
+use crate::umpire;
 use crossterm::{
     cursor,
+    event::{read, Event, KeyCode},
     execute, queue, style,
     terminal::{self, ClearType},
-    event::{read, Event, KeyCode},
-    Result,
+    ErrorKind, Result,
+};
+use rand::Rng;
+use std::io::Write;
+use std::sync::mpsc;
+use std::thread;
+use std::thread::sleep;
+use std::time::Duration;
+use std::{
+    fmt::{self, Display, Formatter},
+    io,
 };
 
 #[derive(Clone, Copy)]
 pub enum TossWonBy {
     Human,
-    Genie
+    Genie,
 }
 
-pub struct CricketGame{
-    pub toss_won_by : TossWonBy,
-    pub toss_decision : utils::PlayerStatus,
-    pub human_player : human::Human,
-    pub genie_player : genie::Genie,
+pub struct ScoreBoard {
+    pub innings: u8,
+    pub max_overs: u16,
+    pub balls: u16,
 }
 
-impl CricketGame{
+pub struct CricketGame {
+    pub toss_won_by: TossWonBy,
+    pub toss_decision: PlayerStatus,
+    pub human_player: human::Human,
+    pub genie_player: genie::Genie,
+    pub score_board: ScoreBoard,
+}
 
-    pub fn new(toss_won_by : TossWonBy, toss_decision : utils::PlayerStatus) ->CricketGame {
-
+impl CricketGame {
+    pub fn new(toss_won_by: TossWonBy, toss_decision: PlayerStatus) -> CricketGame {
         match toss_won_by {
-            game::TossWonBy::Human => {
+            TossWonBy::Human => {
                 match toss_decision {
-                   utils::PlayerStatus::Batting => CricketGame{
-                        toss_won_by : toss_won_by,
-                        toss_decision : toss_decision,
-                        human_player : human::Human {
-                            runs : 0,
-                            status : utils::PlayerStatus::Batting,
-                            wickets : 11,
-                            won_game : utils::GameStatus::InProgress
-                        },
-                        genie_player : genie::Genie{
-                            runs : 0,
-                            status : utils::PlayerStatus::Bowling,
-                            wickets : 11,
-                            won_game : utils::GameStatus::InProgress
+                    PlayerStatus::Batting => {
+                        return CricketGame {
+                            toss_won_by: toss_won_by,
+                            toss_decision: toss_decision,
+                            human_player: human::Human {
+                                runs: 0,
+                                status: PlayerStatus::Batting,
+                                wickets: 11,
+                                won_game: GameStatus::InProgress,
+                            },
+                            genie_player: genie::Genie {
+                                runs: 0,
+                                status: PlayerStatus::Bowling,
+                                wickets: 11,
+                                won_game: GameStatus::InProgress,
+                            },
+                            score_board: ScoreBoard {
+                                balls: 0,
+                                innings: 1,
+                                max_overs: 10,
+                            },
                         }
-                    },
-                    utils::PlayerStatus::Bowling => CricketGame{
-                        toss_won_by : toss_won_by,
-                        toss_decision : toss_decision,
-                        human_player : human::Human {
-                            runs : 0,
-                            status : utils::PlayerStatus::Bowling,
-                            wickets : 11,
-                            won_game : utils::GameStatus::InProgress
-                        },
-                        genie_player : genie::Genie{
-                            runs : 0,
-                            status : utils::PlayerStatus::Batting,
-                            wickets : 11,
-                            won_game : utils::GameStatus::InProgress
+                    }
+                    PlayerStatus::Bowling => {
+                        return CricketGame {
+                            toss_won_by: toss_won_by,
+                            toss_decision: toss_decision,
+                            human_player: human::Human {
+                                runs: 0,
+                                status: PlayerStatus::Bowling,
+                                wickets: 11,
+                                won_game: GameStatus::InProgress,
+                            },
+                            genie_player: genie::Genie {
+                                runs: 0,
+                                status: PlayerStatus::Batting,
+                                wickets: 11,
+                                won_game: GameStatus::InProgress,
+                            },
+                            score_board: ScoreBoard {
+                                balls: 0,
+                                innings: 1,
+                                max_overs: 10,
+                            },
                         }
-                    },
-                }
-            },
-            game::TossWonBy::Genie => {
+                    }
+                };
+            }
+
+            TossWonBy::Genie => {
                 match toss_decision {
-                    utils::PlayerStatus::Batting => CricketGame{
-                        toss_won_by : toss_won_by,
-                        toss_decision : toss_decision,
-                        human_player : human::Human {
-                            runs : 0,
-                            status : utils::PlayerStatus::Bowling,
-                            wickets : 11,
-                            won_game : utils::GameStatus::InProgress
-                        },
-                        genie_player : genie::Genie{
-                            runs : 0,
-                            status : utils::PlayerStatus::Batting,
-                            wickets : 11,
-                            won_game : utils::GameStatus::InProgress
+                    PlayerStatus::Batting => {
+                        return CricketGame {
+                            toss_won_by: toss_won_by,
+                            toss_decision: toss_decision,
+                            human_player: human::Human {
+                                runs: 0,
+                                status: PlayerStatus::Bowling,
+                                wickets: 11,
+                                won_game: GameStatus::InProgress,
+                            },
+                            genie_player: genie::Genie {
+                                runs: 0,
+                                status: PlayerStatus::Batting,
+                                wickets: 11,
+                                won_game: GameStatus::InProgress,
+                            },
+                            score_board: ScoreBoard {
+                                balls: 0,
+                                innings: 1,
+                                max_overs: 10,
+                            },
                         }
-                    },
-                    utils::PlayerStatus::Bowling => CricketGame{
-                        toss_won_by : toss_won_by,
-                        toss_decision : toss_decision,
-                        human_player : human::Human {
-                            runs : 0,
-                            status : utils::PlayerStatus::Batting,
-                            wickets : 11,
-                            won_game : utils::GameStatus::InProgress
-                        },
-                        genie_player : genie::Genie{
-                            runs : 0,
-                            status : utils::PlayerStatus::Bowling,
-                            wickets : 11,
-                            won_game : utils::GameStatus::InProgress
+                    }
+                    PlayerStatus::Bowling => {
+                        return CricketGame {
+                            toss_won_by: toss_won_by,
+                            toss_decision: toss_decision,
+                            human_player: human::Human {
+                                runs: 0,
+                                status: PlayerStatus::Batting,
+                                wickets: 11,
+                                won_game: GameStatus::InProgress,
+                            },
+                            genie_player: genie::Genie {
+                                runs: 0,
+                                status: PlayerStatus::Bowling,
+                                wickets: 11,
+                                won_game: GameStatus::InProgress,
+                            },
+                            score_board: ScoreBoard {
+                                balls: 0,
+                                innings: 1,
+                                max_overs: 10,
+                            },
                         }
-                    },
-                }
+                    }
+                };
             }
         }
     }
 
-    pub fn start<W>(&self, w: &mut W) -> Result<()> 
+    pub fn start<W>(&mut self, w: &mut W) -> Result<()>
     where
-    W: Write,{
-        let bat = "🏏"; 
+        W: Write,
+    {
+        let bat = "🏏";
         let four = "🎯";
         let six = "Maximum !!! 🎳";
         let hundred = "💯";
         let wicket = "OUT !!! ☝";
-        let mut human_prediction : u8;
-        let mut genie_prediction : u8;
+        let mut human_prediction: u16 = 0;
+        let mut genie_prediction: u16 = 0;
+
+        let score_board = ScoreBoard {
+            innings: 0,
+            max_overs: 10,
+            balls: 0,
+        };
 
         loop {
-
             match self.human_player.status {
-
-                utils::PlayerStatus::Bowling => {
-                    queue!(w, style::Print("Guess Batsman score (0-6) "), cursor::MoveToNextLine(1))?;
+                PlayerStatus::Bowling => {
+                    queue!(
+                        w,
+                        style::Print("Guess Batsman score (0-6) "),
+                        cursor::MoveToNextLine(1)
+                    )?;
+                    w.flush();
                     let runs_predict = read()?;
                     if runs_predict == Event::Key(KeyCode::Char('0').into()) {
                         human_prediction = 0;
-                    }
-                    else
-                    if runs_predict == Event::Key(KeyCode::Char('1').into()) {
+                    } else if runs_predict == Event::Key(KeyCode::Char('1').into()) {
                         human_prediction = 1;
-                    }
-                    else
-                    if runs_predict == Event::Key(KeyCode::Char('2').into()) {
+                    } else if runs_predict == Event::Key(KeyCode::Char('2').into()) {
                         human_prediction = 2;
-                    }
-                    else
-                    if runs_predict == Event::Key(KeyCode::Char('3').into()) {
+                    } else if runs_predict == Event::Key(KeyCode::Char('3').into()) {
                         human_prediction = 3;
-                    }
-                    else
-                    if runs_predict == Event::Key(KeyCode::Char('4').into()) {
+                    } else if runs_predict == Event::Key(KeyCode::Char('4').into()) {
                         human_prediction = 4;
-                    }
-                    else
-                    if runs_predict == Event::Key(KeyCode::Char('5').into()) {
+                    } else if runs_predict == Event::Key(KeyCode::Char('5').into()) {
                         human_prediction = 5;
-                    }
-                    else
-                    if runs_predict == Event::Key(KeyCode::Char('6').into()) {
+                    } else if runs_predict == Event::Key(KeyCode::Char('6').into()) {
                         human_prediction = 6;
                     }
-                },
+                }
 
-                utils::PlayerStatus::Batting => {
-                    genie_prediction = rand::thread_rng().gen_range(0,6);
+                PlayerStatus::Batting => {
+                    queue!(
+                        w,
+                        style::Print("Bowling now... "),
+                        cursor::MoveToNextLine(1)
+                    )?;
+                    w.flush();
+                    genie_prediction = rand::thread_rng().gen_range(0, 6);
                 }
             }
 
-            match CricketGame::bowl(&self,w) {
+            match self.bowl(w) {
                 Ok(()) => {
-                    queue!(w, style::Print(bat), cursor::MoveToNextLine(1))?;   
+                    queue!(w, style::Print(bat), cursor::MoveToNextLine(1))?;
                     w.flush()?;
+                }
+                Err(e) => panic!(e),
+            }
+
+            let mut runs_scored : u16 = 0;
+            match CricketGame::bat(self.human_player.status).unwrap() {
+                0..=6 => {
+                    runs_scored = CricketGame::bat(self.human_player.status).unwrap();
                 },
-                Err(e) => {
-                    panic!(e)
+                _ => {
+                    runs_scored = 0;
                 }
             }
-    
-            CricketGame::bat(&self);
-            break;
 
+            match self.human_player.status {
+                PlayerStatus::Batting | PlayerStatus::Bowling  => {
+                    match ScoreBoard::score(runs_scored, genie_prediction, self) {
+                        Ok(GameStatus::InProgress) => {
+                            ScoreBoard::print_score(w, self);
+                            continue;
+                        },
+
+                        Ok(GameStatus::GameOver) => {
+                            ScoreBoard::print_score(w, self);
+                            break;
+                        },
+
+                        Ok(GameStatus::Won) => {
+                            ScoreBoard::print_score(w, self);
+                            break;
+                        },
+
+                        Ok(GameStatus::Loss) => {
+                            ScoreBoard::print_score(w, self);
+                            break;
+                        },
+
+                        Ok(GameStatus::Draw) => {
+                            ScoreBoard::print_score(w, self);
+                            break;
+                        },
+
+                        Err(_) => {
+                            ScoreBoard::print_score(w, self);
+                            break;
+                        },
+                    }
+                },
+            }          
         }
 
-        
         Ok(())
     }
 
-    fn bowl<W>(&self, w : &mut W) -> Result<()> 
+    fn bowl<W>(&self, w: &mut W) -> Result<()>
     where
-    W: Write,{
+        W: Write,
+    {
         let ball = "🏮";
-        let mut duration_remaining = rand::thread_rng().gen_range(3,6);
+        let mut duration_remaining = rand::thread_rng().gen_range(3, 6);
         while duration_remaining > 0 {
-            game::CricketGame::countdown_one_second_from(w, &duration_remaining, true).ok();
+            CricketGame::countdown_one_second_from(w, &duration_remaining, true).ok();
             duration_remaining -= 1;
         }
         w.flush()?;
         Ok(())
     }
 
-    fn bat(&self) -> Result<Event> 
-    {
-        match self.human_player.status {
-            utils::PlayerStatus::Batting => {
-                Ok(read()?)
-            },
-
-            utils::PlayerStatus::Bowling => {
-                match rand::thread_rng().gen_range(0,6) {
-                    0 => Ok(Event::Key(KeyCode::Char('0').into())),
-                    1 => Ok(Event::Key(KeyCode::Char('1').into())),
-                    2 => Ok(Event::Key(KeyCode::Char('2').into())),
-                    3 => Ok(Event::Key(KeyCode::Char('3').into())),
-                    4 => Ok(Event::Key(KeyCode::Char('4').into())),
-                    5 => Ok(Event::Key(KeyCode::Char('5').into())),
-                    6 => Ok(Event::Key(KeyCode::Char('6').into())),
-                    _ => Err(crossterm::ErrorKind::__Nonexhaustive),
+    pub fn bat(human_status: PlayerStatus) -> Result<u16> {
+        match human_status {
+            PlayerStatus::Batting => {
+                let runs = read()?;
+                if runs == Event::Key(KeyCode::Char('0').into()) {
+                    return Ok(0);
+                } else if runs == Event::Key(KeyCode::Char('1').into()) {
+                    return Ok(1);
+                } else if runs == Event::Key(KeyCode::Char('2').into()) {
+                    return Ok(2);
+                } else if runs == Event::Key(KeyCode::Char('3').into()) {
+                    return Ok(3);
+                } else if runs == Event::Key(KeyCode::Char('4').into()) {
+                    return Ok(4);
+                } else if runs == Event::Key(KeyCode::Char('5').into()) {
+                    return Ok(5);
+                } else if runs == Event::Key(KeyCode::Char('6').into()) {
+                    return Ok(6);
+                } else {
+                    return Err(crossterm::ErrorKind::__Nonexhaustive);
                 }
+            }
+            PlayerStatus::Bowling => {
+                return Ok(rand::thread_rng().gen_range(0, 6));
             }
         }
     }
 
-    pub fn countdown_one_second_from<W>(w: &mut W, start_second: &u8, showball : bool) -> Result<()> 
+    pub fn countdown_one_second_from<W>(w: &mut W, start_second: &u8, showball: bool) -> Result<()>
     where
-    W: Write,{
+        W: Write,
+    {
         let quarter_of_second = Duration::from_millis(250);
         let ball = "🏮";
         for _ in 0..*start_second as i64 {
@@ -226,6 +317,78 @@ impl CricketGame{
             sleep(quarter_of_second);
         }
         w.flush()?;
+        Ok(())
+    }
+}
+
+impl ScoreBoard {
+    pub fn score(
+        human_score: u16,
+        genie_score: u16,
+        cricket_game: &mut CricketGame,
+    ) -> Result<GameStatus> {
+        match cricket_game.human_player.status {
+            PlayerStatus::Batting => {
+                if human_score == genie_score {
+                    cricket_game.human_player.wickets = cricket_game.human_player.wickets + 1;
+                }
+                if human_score > genie_score {
+                    cricket_game.human_player.runs += human_score;
+                }
+            }
+            PlayerStatus::Bowling => {
+                if genie_score == human_score {
+                    cricket_game.genie_player.wickets = cricket_game.genie_player.wickets + 1;
+                }
+                if genie_score > human_score {
+                    cricket_game.genie_player.runs += genie_score;
+                }
+            }
+        }
+        cricket_game.score_board.balls += 1;
+
+        if cricket_game.score_board.max_overs * 6 == cricket_game.score_board.balls
+            && cricket_game.score_board.innings == 1
+        {
+            cricket_game.score_board.innings = 2;
+        }
+        
+        ScoreBoard::declare_winner(cricket_game)
+    }
+
+    fn declare_winner(cricket_game: &mut CricketGame) -> Result<GameStatus> {
+        if cricket_game.human_player.runs > cricket_game.genie_player.runs {
+            cricket_game.human_player.won_game = GameStatus::Won;
+            cricket_game.genie_player.won_game = GameStatus::Loss;
+            return Ok(GameStatus::GameOver);
+        }
+
+        if cricket_game.genie_player.runs > cricket_game.human_player.runs {
+            cricket_game.genie_player.won_game = GameStatus::Won;
+            cricket_game.human_player.won_game = GameStatus::Loss;
+            return Ok(GameStatus::GameOver);
+        }
+
+        if cricket_game.genie_player.runs == cricket_game.human_player.runs {
+            cricket_game.genie_player.won_game = GameStatus::Draw;
+            cricket_game.human_player.won_game = GameStatus::Draw;
+            return Ok(GameStatus::Draw);
+        }
+
+        Ok(GameStatus::InProgress)
+    }
+
+    pub fn print_score<W>(w: &mut W, cric_game: &mut CricketGame) -> Result<()>
+    where
+        W: Write,
+    {
+        queue!(
+            w,
+            style::Print("Genie is "),
+            style::Print(cric_game.genie_player.status),
+            cursor::MoveToNextLine(1)
+        )?;
+        w.flush();
         Ok(())
     }
 }
