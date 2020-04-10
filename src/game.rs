@@ -1,24 +1,16 @@
-use crate::errors::errorhandler::ErrorCode;
 use crate::players::utils::{GameStatus, PlayerStatus};
 use crate::players::{genie, human};
-use crate::umpire;
 use crossterm::{
     cursor,
     event::{read, Event, KeyCode},
-    execute, queue, style,
-    terminal::{self, ClearType},
-    ErrorKind, Result,
+    queue, 
+    style,
+    Result,
 };
 use rand::Rng;
 use std::io::Write;
-use std::sync::mpsc;
-use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
-use std::{
-    fmt::{self, Display, Formatter},
-    io,
-};
 
 #[derive(Clone, Copy)]
 pub enum TossWonBy {
@@ -159,12 +151,6 @@ impl CricketGame {
         let mut human_prediction: u16 = 0;
         let mut genie_prediction: u16 = 0;
 
-        let score_board = ScoreBoard {
-            innings: 0,
-            max_overs: 10,
-            balls: 0,
-        };
-
         loop {
             match self.human_player.status {
                 PlayerStatus::Bowling => {
@@ -173,7 +159,7 @@ impl CricketGame {
                         style::Print("Guess Batsman score (0-6) "),
                         cursor::MoveToNextLine(1)
                     )?;
-                    w.flush();
+                    w.flush().ok();
                     let runs_predict = read()?;
                     if runs_predict == Event::Key(KeyCode::Char('0').into()) {
                         human_prediction = 0;
@@ -198,7 +184,7 @@ impl CricketGame {
                         style::Print("Bowling now... "),
                         cursor::MoveToNextLine(1)
                     )?;
-                    w.flush();
+                    w.flush().ok();
                     genie_prediction = rand::thread_rng().gen_range(0, 6);
                 }
             }
@@ -211,7 +197,7 @@ impl CricketGame {
                 Err(e) => panic!(e),
             }
 
-            let mut runs_scored: u16 = 0;
+            let runs_scored: u16;
             match CricketGame::bat(self.human_player.status).unwrap() {
                 0..=6 => {
                     runs_scored = CricketGame::bat(self.human_player.status).unwrap();
@@ -222,10 +208,26 @@ impl CricketGame {
             }
 
             match self.human_player.status {
-                PlayerStatus::Batting | PlayerStatus::Bowling => {
+                PlayerStatus::Batting => {
                     match ScoreBoard::score(runs_scored, genie_prediction, self) {
                         Ok(GameStatus::InProgress) => {
-                            ScoreBoard::print_score(w, self);
+                            ScoreBoard::print_score(w, self).ok();
+                            continue;
+                        },
+                        Ok(GameStatus::GameOver)
+                        | Ok(GameStatus::Won)
+                        | Ok(GameStatus::Loss)
+                        | Ok(GameStatus::Draw)
+                        | Err(_) => {
+                            ScoreBoard::print_score(w, self).ok();
+                            break;
+                        },
+                    }
+                }
+                PlayerStatus::Bowling => {
+                    match ScoreBoard::score(human_prediction, runs_scored, self) {
+                        Ok(GameStatus::InProgress) => {
+                            ScoreBoard::print_score(w, self).ok();
                             continue;
                         }
 
@@ -234,22 +236,21 @@ impl CricketGame {
                         | Ok(GameStatus::Loss)
                         | Ok(GameStatus::Draw)
                         | Err(_) => {
-                            ScoreBoard::print_score(w, self);
+                            ScoreBoard::print_score(w, self).ok();
                             break;
                         }
                     }
                 }
-            }
         }
-
-        Ok(())
     }
+
+    Ok(())
+}
 
     fn bowl<W>(&self, w: &mut W) -> Result<()>
     where
         W: Write,
     {
-        let ball = "🏮";
         let mut duration_remaining = rand::thread_rng().gen_range(3, 6);
         while duration_remaining > 0 {
             CricketGame::countdown_one_second_from(w, &duration_remaining, true).ok();
@@ -353,7 +354,7 @@ impl ScoreBoard {
                 return Ok(GameStatus::GameOver);
             }
 
-            if cricket_game.genie_player.runs == cricket_game.human_player.runs {
+            if cricket_game.genie_player.runs == cricket_game.human_player.runs && cricket_game.score_board.balls == cricket_game.score_board.max_overs * 6 {
                 cricket_game.genie_player.won_game = GameStatus::Draw;
                 cricket_game.human_player.won_game = GameStatus::Draw;
                 return Ok(GameStatus::Draw);
@@ -373,7 +374,7 @@ impl ScoreBoard {
             style::Print(cric_game.genie_player.status),
             cursor::MoveToNextLine(1)
         )?;
-        w.flush();
+        w.flush().ok();
         Ok(())
     }
 }
