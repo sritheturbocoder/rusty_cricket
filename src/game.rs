@@ -199,9 +199,27 @@ impl CricketGame {
 
             let runs_scored: u16;
             match CricketGame::bat(self.human_player.status).unwrap() {
-                0..=6 => {
-                    runs_scored = CricketGame::bat(self.human_player.status).unwrap();
-                }
+                0 => {
+                    runs_scored = 0;
+                },
+                1 => {
+                    runs_scored = 1;
+                },
+                2 => {
+                    runs_scored = 2;
+                },
+                3 => {
+                    runs_scored = 3;
+                },
+                4 => {
+                    runs_scored = 4;
+                },
+                5 => {
+                    runs_scored = 5;
+                },
+                6 => {
+                    runs_scored = 6;
+                },
                 _ => {
                     runs_scored = 0;
                 }
