@@ -18,6 +18,7 @@ pub enum PlayerStatus {
 pub enum GameStatus {
     InProgress,
     NextOver,
+    NextInnings,
     Won,
     Loss,
     Draw,
