@@ -8,7 +8,7 @@ pub use crossterm::{
     Command, Result,
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum PlayerStatus {
     Batting,
     Bowling
@@ -17,6 +17,7 @@ pub enum PlayerStatus {
 #[derive(Clone, Copy)]
 pub enum GameStatus {
     InProgress,
+    NextOver,
     Won,
     Loss,
     Draw,
