@@ -3,8 +3,8 @@ use crate::players::{genie, human};
 use crossterm::{
     cursor,
     event::{read, Event, KeyCode},
-    queue, 
-    style,
+    queue, style,
+    terminal::{self, ClearType},
     Result,
 };
 use rand::Rng;
@@ -21,7 +21,6 @@ pub enum TossWonBy {
 pub struct ScoreBoard {
     pub innings: u8,
     pub max_overs: u16,
-    pub balls: u16,
 }
 
 pub struct CricketGame {
@@ -45,16 +44,21 @@ impl CricketGame {
                                 runs: 0,
                                 status: PlayerStatus::Batting,
                                 wickets: 11,
+                                bowled_balls: 0,
+                                required_runrate: 0.0,
+                                current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
                             },
                             genie_player: genie::Genie {
                                 runs: 0,
                                 status: PlayerStatus::Bowling,
                                 wickets: 11,
+                                bowled_balls: 0,
+                                required_runrate: 0.0,
+                                current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
                             },
                             score_board: ScoreBoard {
-                                balls: 0,
                                 innings: 1,
                                 max_overs: 10,
                             },
@@ -68,16 +72,21 @@ impl CricketGame {
                                 runs: 0,
                                 status: PlayerStatus::Bowling,
                                 wickets: 11,
+                                bowled_balls: 0,
+                                required_runrate: 0.0,
+                                current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
                             },
                             genie_player: genie::Genie {
                                 runs: 0,
                                 status: PlayerStatus::Batting,
                                 wickets: 11,
+                                bowled_balls: 0,
+                                required_runrate: 0.0,
+                                current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
                             },
                             score_board: ScoreBoard {
-                                balls: 0,
                                 innings: 1,
                                 max_overs: 10,
                             },
@@ -96,16 +105,21 @@ impl CricketGame {
                                 runs: 0,
                                 status: PlayerStatus::Bowling,
                                 wickets: 11,
+                                bowled_balls: 0,
+                                required_runrate: 0.0,
+                                current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
                             },
                             genie_player: genie::Genie {
                                 runs: 0,
                                 status: PlayerStatus::Batting,
                                 wickets: 11,
+                                bowled_balls: 0,
+                                required_runrate: 0.0,
+                                current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
                             },
                             score_board: ScoreBoard {
-                                balls: 0,
                                 innings: 1,
                                 max_overs: 10,
                             },
@@ -119,16 +133,21 @@ impl CricketGame {
                                 runs: 0,
                                 status: PlayerStatus::Batting,
                                 wickets: 11,
+                                bowled_balls: 0,
+                                required_runrate: 0.0,
+                                current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
                             },
                             genie_player: genie::Genie {
                                 runs: 0,
                                 status: PlayerStatus::Bowling,
                                 wickets: 11,
+                                bowled_balls: 0,
+                                required_runrate: 0.0,
+                                current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
                             },
                             score_board: ScoreBoard {
-                                balls: 0,
                                 innings: 1,
                                 max_overs: 10,
                             },
@@ -144,14 +163,13 @@ impl CricketGame {
         W: Write,
     {
         let bat = "🏏";
-        let four = "🎯";
-        let six = "Maximum !!! 🎳";
-        let hundred = "💯";
-        let wicket = "OUT !!! ☝";
         let mut human_prediction: u16 = 0;
         let mut genie_prediction: u16 = 0;
 
         loop {
+            queue!(w, terminal::Clear(ClearType::All))?;
+            queue!(w, cursor::MoveTo(1, 1))?;
+            w.flush().ok();
             match self.human_player.status {
                 PlayerStatus::Bowling => {
                     queue!(
@@ -201,25 +219,25 @@ impl CricketGame {
             match CricketGame::bat(self.human_player.status).unwrap() {
                 0 => {
                     runs_scored = 0;
-                },
+                }
                 1 => {
                     runs_scored = 1;
-                },
+                }
                 2 => {
                     runs_scored = 2;
-                },
+                }
                 3 => {
                     runs_scored = 3;
-                },
+                }
                 4 => {
                     runs_scored = 4;
-                },
+                }
                 5 => {
                     runs_scored = 5;
-                },
+                }
                 6 => {
                     runs_scored = 6;
-                },
+                }
                 _ => {
                     runs_scored = 0;
                 }
@@ -229,17 +247,34 @@ impl CricketGame {
                 PlayerStatus::Batting => {
                     match ScoreBoard::score(runs_scored, genie_prediction, self) {
                         Ok(GameStatus::InProgress) => {
-                            ScoreBoard::print_score(w, self).ok();
                             continue;
-                        },
+                        }
+                        Ok(GameStatus::NextOver) => {
+                            ScoreBoard::print_score(w, self).ok();
+                            queue!(
+                                w,
+                                style::Print("Press any key for next over..."),
+                                cursor::MoveToNextLine(1)
+                            )?;
+                            w.flush().ok();
+                            read()?;
+                            continue;
+                        }
                         Ok(GameStatus::GameOver)
                         | Ok(GameStatus::Won)
                         | Ok(GameStatus::Loss)
                         | Ok(GameStatus::Draw)
                         | Err(_) => {
                             ScoreBoard::print_score(w, self).ok();
+                            queue!(
+                                w,
+                                style::Print("Game over :)...Press any key..."),
+                                cursor::MoveToNextLine(1)
+                            )?;
+                            w.flush().ok();
+                            read()?;
                             break;
-                        },
+                        }
                     }
                 }
                 PlayerStatus::Bowling => {
@@ -248,22 +283,39 @@ impl CricketGame {
                             ScoreBoard::print_score(w, self).ok();
                             continue;
                         }
-
+                        Ok(GameStatus::NextOver) => {
+                            ScoreBoard::print_score(w, self).ok();
+                            queue!(
+                                w,
+                                style::Print("Press any key for next over..."),
+                                cursor::MoveToNextLine(1)
+                            )?;
+                            w.flush().ok();
+                            read()?;
+                            continue;
+                        }
                         Ok(GameStatus::GameOver)
                         | Ok(GameStatus::Won)
                         | Ok(GameStatus::Loss)
                         | Ok(GameStatus::Draw)
                         | Err(_) => {
                             ScoreBoard::print_score(w, self).ok();
+                            queue!(
+                                w,
+                                style::Print("Game over :)...Press any key..."),
+                                cursor::MoveToNextLine(1)
+                            )?;
+                            w.flush().ok();
+                            read()?;
                             break;
                         }
                     }
                 }
+            }
         }
-    }
 
-    Ok(())
-}
+        Ok(())
+    }
 
     fn bowl<W>(&self, w: &mut W) -> Result<()>
     where
@@ -332,33 +384,73 @@ impl ScoreBoard {
     ) -> Result<GameStatus> {
         match cricket_game.human_player.status {
             PlayerStatus::Batting => {
+                cricket_game.genie_player.bowled_balls += 1;
                 if human_score == genie_score {
                     cricket_game.human_player.wickets = cricket_game.human_player.wickets + 1;
                 }
                 if human_score > genie_score {
                     cricket_game.human_player.runs += human_score;
                 }
+                if cricket_game.score_board.max_overs * 6 == cricket_game.genie_player.bowled_balls
+                    && cricket_game.score_board.innings == 1
+                {
+                    cricket_game.score_board.innings = 2;
+                    cricket_game.human_player.status = PlayerStatus::Bowling;
+                    cricket_game.genie_player.status = PlayerStatus::Batting;
+                }
             }
             PlayerStatus::Bowling => {
+                cricket_game.human_player.bowled_balls += 1;
                 if genie_score == human_score {
                     cricket_game.genie_player.wickets = cricket_game.genie_player.wickets + 1;
                 }
                 if genie_score > human_score {
                     cricket_game.genie_player.runs += genie_score;
                 }
+                if cricket_game.score_board.max_overs * 6 == cricket_game.human_player.bowled_balls
+                    && cricket_game.score_board.innings == 1
+                {
+                    cricket_game.score_board.innings = 2;
+                    cricket_game.human_player.status = PlayerStatus::Batting;
+                    cricket_game.genie_player.status = PlayerStatus::Bowling;
+                }
             }
         }
-        cricket_game.score_board.balls += 1;
 
-        if cricket_game.score_board.max_overs * 6 == cricket_game.score_board.balls
-            && cricket_game.score_board.innings == 1
+        if cricket_game.human_player.status == PlayerStatus::Batting
+            && cricket_game.score_board.innings == 2
         {
-            cricket_game.score_board.innings = 2;
+            let required_runs: f32 =
+                (cricket_game.genie_player.runs - cricket_game.human_player.runs) as f32;
+            let remaining_overs: f32 = (cricket_game.score_board.max_overs
+                - (cricket_game.genie_player.bowled_balls / 6))
+                as f32;
+            cricket_game.human_player.required_runrate = required_runs / remaining_overs;
+
+            let current_runs: f32 = cricket_game.human_player.runs as f32;
+            let overs_bowled: f32 = (cricket_game.genie_player.bowled_balls / 6) as f32;
+            cricket_game.human_player.current_runrate = current_runs / overs_bowled;
         }
-        ScoreBoard::declare_winner(cricket_game)
+
+        if cricket_game.genie_player.status == PlayerStatus::Batting
+            && cricket_game.score_board.innings == 2
+        {
+            let required_runs: f32 =
+                (cricket_game.human_player.runs - cricket_game.genie_player.runs) as f32;
+            let remaining_overs: f32 = (cricket_game.score_board.max_overs
+                - (cricket_game.human_player.bowled_balls / 6))
+                as f32;
+            cricket_game.genie_player.required_runrate = required_runs / remaining_overs;
+
+            let current_runs: f32 = cricket_game.genie_player.runs as f32;
+            let overs_bowled: f32 = (cricket_game.human_player.bowled_balls / 6) as f32;
+            cricket_game.genie_player.current_runrate = current_runs / overs_bowled;
+        }
+
+        ScoreBoard::check_game_status(cricket_game)
     }
 
-    fn declare_winner(cricket_game: &mut CricketGame) -> Result<GameStatus> {
+    fn check_game_status(cricket_game: &mut CricketGame) -> Result<GameStatus> {
         if cricket_game.score_board.innings == 2 {
             if cricket_game.human_player.runs > cricket_game.genie_player.runs {
                 cricket_game.human_player.won_game = GameStatus::Won;
@@ -372,13 +464,26 @@ impl ScoreBoard {
                 return Ok(GameStatus::GameOver);
             }
 
-            if cricket_game.genie_player.runs == cricket_game.human_player.runs && cricket_game.score_board.balls == cricket_game.score_board.max_overs * 6 {
+            if cricket_game.genie_player.runs == cricket_game.human_player.runs
+                && cricket_game.human_player.bowled_balls == cricket_game.genie_player.bowled_balls
+            {
                 cricket_game.genie_player.won_game = GameStatus::Draw;
                 cricket_game.human_player.won_game = GameStatus::Draw;
                 return Ok(GameStatus::Draw);
             }
         }
 
+        if cricket_game.human_player.status == PlayerStatus::Bowling {
+            if cricket_game.human_player.bowled_balls % 6 == 0 {
+                return Ok(GameStatus::NextOver);
+            }
+        }
+
+        if cricket_game.genie_player.status == PlayerStatus::Bowling {
+            if cricket_game.genie_player.bowled_balls % 6 == 0 {
+                return Ok(GameStatus::NextOver);
+            }
+        }
         Ok(GameStatus::InProgress)
     }
 
@@ -386,12 +491,97 @@ impl ScoreBoard {
     where
         W: Write,
     {
+        queue!(w, terminal::Clear(ClearType::All), cursor::MoveTo(1, 1))?;
         queue!(
             w,
-            style::Print("Genie is "),
-            style::Print(cric_game.genie_player.status),
+            style::Print("**************************************************"),
             cursor::MoveToNextLine(1)
         )?;
+
+        queue!(
+            w,
+            style::Print(cric_game.score_board.innings),
+            style::Print(" Innings "),
+            cursor::MoveToNextLine(1)
+        )?;
+
+        match cric_game.human_player.status {
+            PlayerStatus::Batting => {
+                queue!(
+                    w,
+                    style::Print("You are Batting and score is "),
+                    style::Print(cric_game.human_player.runs),
+                    style::Print(" / "),
+                    style::Print(cric_game.human_player.wickets),
+                    style::Print(" wickets "),
+                )?;
+                queue!(
+                    w,
+                    style::Print("I am bowling "),
+                    style::Print(cric_game.genie_player.bowled_balls / 6),
+                    style::Print(" overs "),
+                    style::Print(cric_game.human_player.wickets),
+                    style::Print(" wickets "),
+                )?;
+            }
+            PlayerStatus::Bowling => {
+                queue!(
+                    w,
+                    style::Print("You are bowling "),
+                    style::Print(cric_game.human_player.bowled_balls / 6),
+                    style::Print(" overs "),
+                    style::Print(cric_game.genie_player.wickets),
+                    style::Print(" wickets "),
+                )?;
+                queue!(
+                    w,
+                    style::Print("I Batting and score is "),
+                    style::Print(cric_game.genie_player.runs),
+                    style::Print(" / "),
+                    style::Print(cric_game.genie_player.wickets),
+                    style::Print(" wickets "),
+                )?;
+            }
+        }
+
+        if cric_game.score_board.innings == 2 {
+            if cric_game.human_player.status == PlayerStatus::Batting {
+                queue!(
+                    w,
+                    style::Print("Required run rate : "),
+                    style::Print(cric_game.human_player.required_runrate),
+                    cursor::MoveToNextLine(1),
+                )?;
+
+                queue!(
+                    w,
+                    style::Print("Current run rate : "),
+                    style::Print(cric_game.human_player.current_runrate),
+                    cursor::MoveToNextLine(1),
+                )?;
+            } else {
+                queue!(
+                    w,
+                    style::Print("Required run rate : "),
+                    style::Print(cric_game.genie_player.required_runrate),
+                    cursor::MoveToNextLine(1),
+                )?;
+
+                queue!(
+                    w,
+                    style::Print("Current run rate : "),
+                    style::Print(cric_game.genie_player.current_runrate),
+                    cursor::MoveToNextLine(1),
+                )?;
+            }
+        }
+
+        queue!(
+            w,
+            style::Print("**************************************************"),
+            cursor::MoveToNextLine(1)
+        )?;
+
         w.flush().ok();
         Ok(())
     }
