@@ -259,18 +259,20 @@ impl CricketGame {
                             w.flush().ok();
                             read()?;
                             continue;
-                        },
+                        }
                         Ok(GameStatus::NextInnings) => {
                             ScoreBoard::print_score(w, self).ok();
                             queue!(
                                 w,
-                                style::Print("Get ready to Bowl. Press any key for next innings..."),
+                                style::Print(
+                                    "Get ready to Bowl. Press any key for next innings..."
+                                ),
                                 cursor::MoveToNextLine(1)
                             )?;
                             w.flush().ok();
                             read()?;
                             continue;
-                        },
+                        }
                         Ok(GameStatus::GameOver)
                         | Ok(GameStatus::Won)
                         | Ok(GameStatus::Loss)
@@ -304,7 +306,7 @@ impl CricketGame {
                             w.flush().ok();
                             read()?;
                             continue;
-                        },
+                        }
                         Ok(GameStatus::NextInnings) => {
                             ScoreBoard::print_score(w, self).ok();
                             queue!(
@@ -315,7 +317,7 @@ impl CricketGame {
                             w.flush().ok();
                             read()?;
                             continue;
-                        },
+                        }
                         Ok(GameStatus::GameOver)
                         | Ok(GameStatus::Won)
                         | Ok(GameStatus::Loss)
@@ -413,8 +415,9 @@ impl ScoreBoard {
                 if human_score > genie_score {
                     cricket_game.human_player.runs += human_score;
                 }
-                if (cricket_game.score_board.max_overs * 6 == cricket_game.genie_player.bowled_balls ||
-                    cricket_game.human_player.wickets == 11 )
+                if (cricket_game.score_board.max_overs * 6
+                    == cricket_game.genie_player.bowled_balls
+                    || cricket_game.human_player.wickets == 11)
                     && cricket_game.score_board.innings == 1
                 {
                     cricket_game.score_board.innings = 2;
@@ -431,8 +434,9 @@ impl ScoreBoard {
                 if genie_score > human_score {
                     cricket_game.genie_player.runs += genie_score;
                 }
-                if (cricket_game.score_board.max_overs * 6 == cricket_game.human_player.bowled_balls ||
-                    cricket_game.genie_player.wickets == 11)
+                if (cricket_game.score_board.max_overs * 6
+                    == cricket_game.human_player.bowled_balls
+                    || cricket_game.genie_player.wickets == 11)
                     && cricket_game.score_board.innings == 1
                 {
                     cricket_game.score_board.innings = 2;
@@ -447,7 +451,7 @@ impl ScoreBoard {
             && cricket_game.score_board.innings == 2
         {
             let required_runs: f32 =
-                (cricket_game.genie_player.runs - cricket_game.human_player.runs) as f32;
+                cricket_game.genie_player.runs as f32 - cricket_game.human_player.runs as f32 ;
             let remaining_overs: f32 = (cricket_game.score_board.max_overs
                 - (cricket_game.genie_player.bowled_balls / 6))
                 as f32;
@@ -462,7 +466,7 @@ impl ScoreBoard {
             && cricket_game.score_board.innings == 2
         {
             let required_runs: f32 =
-                (cricket_game.human_player.runs - cricket_game.genie_player.runs) as f32;
+                cricket_game.human_player.runs as f32 - cricket_game.genie_player.runs as f32;
             let remaining_overs: f32 = (cricket_game.score_board.max_overs
                 - (cricket_game.human_player.bowled_balls / 6))
                 as f32;
@@ -478,13 +482,17 @@ impl ScoreBoard {
 
     fn check_game_status(cricket_game: &mut CricketGame) -> Result<GameStatus> {
         if cricket_game.score_board.innings == 2 {
-            if cricket_game.human_player.runs > cricket_game.genie_player.runs {
+            if cricket_game.human_player.runs > cricket_game.genie_player.runs
+                && cricket_game.human_player.status == PlayerStatus::Batting
+            {
                 cricket_game.human_player.won_game = GameStatus::Won;
                 cricket_game.genie_player.won_game = GameStatus::Loss;
                 return Ok(GameStatus::GameOver);
             }
 
-            if cricket_game.genie_player.runs > cricket_game.human_player.runs {
+            if cricket_game.genie_player.runs > cricket_game.human_player.runs
+                && cricket_game.genie_player.status == PlayerStatus::Batting
+            {
                 cricket_game.genie_player.won_game = GameStatus::Won;
                 cricket_game.human_player.won_game = GameStatus::Loss;
                 return Ok(GameStatus::GameOver);
@@ -496,6 +504,20 @@ impl ScoreBoard {
                 cricket_game.genie_player.won_game = GameStatus::Draw;
                 cricket_game.human_player.won_game = GameStatus::Draw;
                 return Ok(GameStatus::Draw);
+            }
+
+            if cricket_game.human_player.bowled_balls == cricket_game.genie_player.bowled_balls {
+                if cricket_game.human_player.runs > cricket_game.genie_player.runs {
+                    cricket_game.human_player.won_game = GameStatus::Won;
+                    cricket_game.genie_player.won_game = GameStatus::Loss;
+                    return Ok(GameStatus::GameOver);
+                }
+
+                if cricket_game.genie_player.runs > cricket_game.human_player.runs {
+                    cricket_game.genie_player.won_game = GameStatus::Won;
+                    cricket_game.human_player.won_game = GameStatus::Loss;
+                    return Ok(GameStatus::GameOver);
+                }
             }
         }
 
@@ -510,6 +532,7 @@ impl ScoreBoard {
                 return Ok(GameStatus::NextOver);
             }
         }
+
         Ok(GameStatus::InProgress)
     }
 
@@ -575,11 +598,16 @@ impl ScoreBoard {
             if cric_game.human_player.status == PlayerStatus::Batting {
                 queue!(
                     w,
+                    style::Print("Runs to win : "),
+                    style::Print(cric_game.genie_player.runs - cric_game.human_player.runs),
+                    cursor::MoveToNextLine(1),
+                )?;
+                queue!(
+                    w,
                     style::Print("Required run rate : "),
                     style::Print(cric_game.human_player.required_runrate),
                     cursor::MoveToNextLine(1),
                 )?;
-
                 queue!(
                     w,
                     style::Print("Current run rate : "),
@@ -589,11 +617,16 @@ impl ScoreBoard {
             } else {
                 queue!(
                     w,
+                    style::Print("Runs to win : "),
+                    style::Print(cric_game.human_player.runs - cric_game.genie_player.runs),
+                    cursor::MoveToNextLine(1),
+                )?;
+                queue!(
+                    w,
                     style::Print("Required run rate : "),
                     style::Print(cric_game.genie_player.required_runrate),
                     cursor::MoveToNextLine(1),
                 )?;
-
                 queue!(
                     w,
                     style::Print("Current run rate : "),
