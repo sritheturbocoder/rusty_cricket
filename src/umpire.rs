@@ -20,8 +20,8 @@ const MENU: &str = r#"fun with rusty cricket
 Instructions:
 
 - 'q' - quit interactive test (or return to this menu)
-- '$' for heads 
-- '@' for tails
+- 'h' for heads 
+- 't' for tails
 - '1' for batting 
 - '2' for bowling 
 - '0-6' for runs
@@ -56,12 +56,12 @@ pub fn toss<W>(w: &mut W) -> Result<()>
                 queue!(w, style::Print(line), cursor::MoveToNextLine(1))?;
             }
     
-            queue!(w, style::Print("Let's Toss $ (or) @"), cursor::MoveToNextLine(1))?;
+            queue!(w, style::Print("Choose your Toss h (or) t"), cursor::MoveToNextLine(1))?;
             w.flush()?;
 
             let toss_event = read()?;
             
-            if toss_event == Event::Key(KeyCode::Char('$').into()) {
+            if toss_event == Event::Key(KeyCode::Char('h').into()) {
                 queue!(w, style::Print("You choose heads"), cursor::MoveToNextLine(1))?;
                 w.flush()?;
                 if CoinToss::guess("Heads".parse()?).is_correct() {
@@ -117,7 +117,7 @@ pub fn toss<W>(w: &mut W) -> Result<()>
                 }
             }
 
-            if toss_event == Event::Key(KeyCode::Char('@').into()) {
+            if toss_event == Event::Key(KeyCode::Char('t').into()) {
                 queue!(w, style::Print("You choose tails"), cursor::MoveToNextLine(1))?;
                 w.flush()?;
                 if CoinToss::guess("Heads".parse()?).is_correct() {
