@@ -174,7 +174,7 @@ impl CricketGame {
                 PlayerStatus::Bowling => {
                     queue!(
                         w,
-                        style::Print("Guess Batsman score (0-6) "),
+                        style::Print("Choose your bowling speed (0-6) "),
                         cursor::MoveToNextLine(1)
                     )?;
                     w.flush().ok();
@@ -616,7 +616,7 @@ impl ScoreBoard {
                 queue!(
                     w,
                     style::Print("Runs to win : "),
-                    style::Print(cric_game.genie_player.runs - cric_game.human_player.runs),
+                    style::Print(cric_game.genie_player.runs as f32 - cric_game.human_player.runs as f32),
                     cursor::MoveToNextLine(1),
                 )?;
                 queue!(
@@ -635,7 +635,7 @@ impl ScoreBoard {
                 queue!(
                     w,
                     style::Print("Runs to win : "),
-                    style::Print(cric_game.human_player.runs - cric_game.genie_player.runs),
+                    style::Print(cric_game.human_player.runs as f32 - cric_game.genie_player.runs as f32),
                     cursor::MoveToNextLine(1),
                 )?;
                 queue!(
@@ -659,6 +659,65 @@ impl ScoreBoard {
             cursor::MoveToNextLine(1)
         )?;
 
+        match cric_game.human_player.won_game {
+            GameStatus::Draw => {
+                queue!(
+                    w,
+                    style::Print("**************************************************"),
+                    cursor::MoveToNextLine(1)
+                )?;
+                queue!(
+                    w,
+                    style::Print("Match ended in a Draw"),
+                    cursor::MoveToNextLine(1)
+                )?;
+                queue!(
+                    w,
+                    style::Print("**************************************************"),
+                    cursor::MoveToNextLine(1)
+                )?;
+            },
+
+            GameStatus::Won => {
+                queue!(
+                    w,
+                    style::Print("**************************************************"),
+                    cursor::MoveToNextLine(1)
+                )?;
+                queue!(
+                    w,
+                    style::Print("Hurray !! You won the game !!!!"),
+                    cursor::MoveToNextLine(1)
+                )?;
+                queue!(
+                    w,
+                    style::Print("**************************************************"),
+                    cursor::MoveToNextLine(1)
+                )?;
+            },
+
+            GameStatus::Loss => {
+                queue!(
+                    w,
+                    style::Print("**************************************************"),
+                    cursor::MoveToNextLine(1)
+                )?;
+                queue!(
+                    w,
+                    style::Print("You Lost the match, Wanna try again ?"),
+                    cursor::MoveToNextLine(1)
+                )?;
+                queue!(
+                    w,
+                    style::Print("**************************************************"),
+                    cursor::MoveToNextLine(1)
+                )?;
+            },          
+
+            _ => {
+                // just continue playing
+            }
+        }
         w.flush().ok();
         Ok(())
     }
