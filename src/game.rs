@@ -406,6 +406,9 @@ impl ScoreBoard {
         genie_score: u16,
         cricket_game: &mut CricketGame,
     ) -> Result<GameStatus> {
+        
+        let mut new_innings : bool = false;
+
         match cricket_game.human_player.status {
             PlayerStatus::Batting => {
                 cricket_game.genie_player.bowled_balls += 1;
@@ -423,6 +426,7 @@ impl ScoreBoard {
                     cricket_game.score_board.innings = 2;
                     cricket_game.human_player.status = PlayerStatus::Bowling;
                     cricket_game.genie_player.status = PlayerStatus::Batting;
+                    new_innings = true;
                 }
             }
             PlayerStatus::Bowling => {
@@ -441,6 +445,7 @@ impl ScoreBoard {
                     cricket_game.score_board.innings = 2;
                     cricket_game.human_player.status = PlayerStatus::Batting;
                     cricket_game.genie_player.status = PlayerStatus::Bowling;
+                    new_innings = true;
                 }
             }
         }
@@ -494,7 +499,13 @@ impl ScoreBoard {
             }
         }
 
-        ScoreBoard::check_game_status(cricket_game)
+        if new_innings {
+            Ok(GameStatus::NextInnings)
+        }
+        else
+        {
+            ScoreBoard::check_game_status(cricket_game)
+        }
     }
 
     fn check_game_status(cricket_game: &mut CricketGame) -> Result<GameStatus> {
