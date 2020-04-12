@@ -56,7 +56,7 @@ pub fn toss<W>(w: &mut W) -> Result<()>
                 queue!(w, style::Print(line), cursor::MoveToNextLine(1))?;
             }
     
-            queue!(w, style::Print("Let's Toss h (or) t"), cursor::MoveToNextLine(1))?;
+            queue!(w, style::Print("Let's Toss $ (or) @"), cursor::MoveToNextLine(1))?;
             w.flush()?;
 
             let toss_event = read()?;
