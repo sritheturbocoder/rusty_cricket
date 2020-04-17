@@ -1,5 +1,4 @@
 extern crate crossterm;
-
 use crate::toss::coin_toss::{CoinToss};
 use crate::players::utils::*;
 use crate::game::{CricketGame, TossWonBy};
@@ -65,7 +64,6 @@ pub fn toss<W>(w: &mut W) -> Result<()>
                 queue!(w, style::Print("You choose heads"), cursor::MoveToNextLine(1))?;
                 w.flush()?;
                 if CoinToss::guess("Heads".parse()?).is_correct() {
-                    
                     for line in TOSSCHOICE.split('\n') {
                         queue!(w, style::Print(line), cursor::MoveToNextLine(1))?;
                     }
@@ -75,24 +73,10 @@ pub fn toss<W>(w: &mut W) -> Result<()>
                     let toss_decision = read()?;
 
                     if toss_decision == Event::Key(KeyCode::Char('1').into()) {
-                        match CricketGame::new(TossWonBy::Human, PlayerStatus::Batting).start(w){
-                            Ok(()) => {
-                                break;
-                            },
-                            Err(e) => {
-                                panic!(e);
-                            }
-                        }
+                        start_game!(TossWonBy::Human, PlayerStatus::Batting, w);
                     }
                     else if toss_decision == Event::Key(KeyCode::Char('2').into()) {
-                        match CricketGame::new(TossWonBy::Human, PlayerStatus::Bowling).start(w){
-                            Ok(()) => {
-                                break;
-                            },
-                            Err(e) => {
-                                panic!(e);
-                            }
-                        }
+                        start_game!(TossWonBy::Human, PlayerStatus::Bowling, w);
                     }
                     else if toss_decision == Event::Key(KeyCode::Char('q').into()) {
                         break;
@@ -108,10 +92,10 @@ pub fn toss<W>(w: &mut W) -> Result<()>
                     w.flush()?;
                     match rand::thread_rng().gen::<bool>() {
                         true => {
-                            CricketGame::new(TossWonBy::Genie, PlayerStatus::Batting);
+                            start_game!(TossWonBy::Genie, PlayerStatus::Batting, w);
                         },
                         _ => {
-                            CricketGame::new(TossWonBy::Genie, PlayerStatus::Bowling);
+                            start_game!(TossWonBy::Genie, PlayerStatus::Bowling, w);
                         }
                     }
                 }
@@ -120,7 +104,7 @@ pub fn toss<W>(w: &mut W) -> Result<()>
             if toss_event == Event::Key(KeyCode::Char('t').into()) {
                 queue!(w, style::Print("You choose tails"), cursor::MoveToNextLine(1))?;
                 w.flush()?;
-                if CoinToss::guess("Heads".parse()?).is_correct() {
+                if CoinToss::guess("Tails".parse()?).is_correct() {
                     
                     for line in TOSSCHOICE.split('\n') {
                         queue!(w, style::Print(line), cursor::MoveToNextLine(1))?;
@@ -131,24 +115,10 @@ pub fn toss<W>(w: &mut W) -> Result<()>
                     let toss_decision = read()?;
 
                     if toss_decision == Event::Key(KeyCode::Char('1').into()) {
-                        match CricketGame::new(TossWonBy::Human, PlayerStatus::Batting).start(w) {
-                            Ok(()) => {
-                                break;
-                            },
-                            Err(e) => {
-                                panic!(e);
-                            }
-                        }
+                        start_game!(TossWonBy::Human, PlayerStatus::Batting, w);
                     }
                     else if toss_decision == Event::Key(KeyCode::Char('2').into()) {
-                        match CricketGame::new(TossWonBy::Human, PlayerStatus::Bowling).start(w) {
-                                Ok(()) => {
-                                    break;
-                                },
-                                Err(e) => {
-                                    panic!(e);
-                                }
-                        }
+                        start_game!(TossWonBy::Human, PlayerStatus::Bowling, w);
                     }
                     else if toss_decision == Event::Key(KeyCode::Char('q').into()) {
                         break;
@@ -164,24 +134,10 @@ pub fn toss<W>(w: &mut W) -> Result<()>
                     w.flush()?;
                     match rand::thread_rng().gen::<bool>() {
                         true => {
-                            match CricketGame::new(TossWonBy::Genie, PlayerStatus::Batting).start(w) {
-                                Ok(()) => {
-                                    break;
-                                },
-                                Err(e) => {
-                                    panic!(e);
-                                }
-                            }
+                            start_game!(TossWonBy::Genie,PlayerStatus::Batting,w);
                         },
                         _ => {
-                            match CricketGame::new(TossWonBy::Genie, PlayerStatus::Bowling).start(w) {
-                                Ok(()) => {
-                                    break;
-                                },
-                                Err(e) => {
-                                    panic!(e);
-                                }
-                            }
+                            start_game!(TossWonBy::Genie,PlayerStatus::Bowling,w);
                         }
                     }
                 }
