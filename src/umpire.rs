@@ -61,88 +61,11 @@ pub fn toss<W>(w: &mut W) -> Result<()>
             let toss_event = read()?;
             
             if toss_event == Event::Key(KeyCode::Char('h').into()) {
-                queue!(w, style::Print("You choose heads"), cursor::MoveToNextLine(1))?;
-                w.flush()?;
-                if CoinToss::guess("Heads".parse()?).is_correct() {
-                    for line in TOSSCHOICE.split('\n') {
-                        queue!(w, style::Print(line), cursor::MoveToNextLine(1))?;
-                    }
-
-                    w.flush()?;
-
-                    let toss_decision = read()?;
-
-                    if toss_decision == Event::Key(KeyCode::Char('1').into()) {
-                        start_game!(TossWonBy::Human, PlayerStatus::Batting, w);
-                    }
-                    else if toss_decision == Event::Key(KeyCode::Char('2').into()) {
-                        start_game!(TossWonBy::Human, PlayerStatus::Bowling, w);
-                    }
-                    else if toss_decision == Event::Key(KeyCode::Char('q').into()) {
-                        break;
-                    }
-                    else {
-                        queue!(w, style::Print("Invaid input, Choose h or t"), cursor::MoveToNextLine(1))?;
-                        w.flush()?;
-                        continue;
-                    }
-                }
-                else {
-                    queue!(w, style::Print("You lost toss"), cursor::MoveToNextLine(1))?;
-                    w.flush()?;
-                    match rand::thread_rng().gen::<bool>() {
-                        true => {
-                            start_game!(TossWonBy::Genie, PlayerStatus::Batting, w);
-                        },
-                        _ => {
-                            start_game!(TossWonBy::Genie, PlayerStatus::Bowling, w);
-                        }
-                    }
-                }
+                toss!("Heads", w);
             }
-
-            if toss_event == Event::Key(KeyCode::Char('t').into()) {
-                queue!(w, style::Print("You choose tails"), cursor::MoveToNextLine(1))?;
-                w.flush()?;
-                if CoinToss::guess("Tails".parse()?).is_correct() {
-                    
-                    for line in TOSSCHOICE.split('\n') {
-                        queue!(w, style::Print(line), cursor::MoveToNextLine(1))?;
-                    }
-
-                    w.flush()?;
-
-                    let toss_decision = read()?;
-
-                    if toss_decision == Event::Key(KeyCode::Char('1').into()) {
-                        start_game!(TossWonBy::Human, PlayerStatus::Batting, w);
-                    }
-                    else if toss_decision == Event::Key(KeyCode::Char('2').into()) {
-                        start_game!(TossWonBy::Human, PlayerStatus::Bowling, w);
-                    }
-                    else if toss_decision == Event::Key(KeyCode::Char('q').into()) {
-                        break;
-                    }
-                    else {
-                        queue!(w, style::Print("Invaid input, Choose h or t"), cursor::MoveToNextLine(1))?;
-                        w.flush()?;
-                        continue;
-                    }
-                }
-                else {
-                    queue!(w, style::Print("You lost toss"), cursor::MoveToNextLine(1))?;
-                    w.flush()?;
-                    match rand::thread_rng().gen::<bool>() {
-                        true => {
-                            start_game!(TossWonBy::Genie,PlayerStatus::Batting,w);
-                        },
-                        _ => {
-                            start_game!(TossWonBy::Genie,PlayerStatus::Bowling,w);
-                        }
-                    }
-                }
+            else if toss_event == Event::Key(KeyCode::Char('t').into()) {
+                toss!("Tails", w);
             }
-
             if toss_event == Event::Key(KeyCode::Char('q').into()) {
                 break;
             }
