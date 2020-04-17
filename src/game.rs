@@ -1,5 +1,5 @@
-use crate::players::utils::{GameStatus, PlayerStatus};
-use crate::players::{genie, human};
+use crate::utils::utils::{PlayerStatus, GameStatus};
+use crate::player::{Player,Human, Computer};
 use crossterm::{
     cursor,
     event::{read, Event, KeyCode},
@@ -26,8 +26,8 @@ pub struct ScoreBoard {
 pub struct CricketGame {
     pub toss_won_by: TossWonBy,
     pub toss_decision: PlayerStatus,
-    pub human_player: human::Human,
-    pub genie_player: genie::Genie,
+    pub human_player: Player<Human>,
+    pub genie_player: Player<Computer>,
     pub score_board: ScoreBoard,
 }
 
@@ -40,7 +40,7 @@ impl CricketGame {
                         return CricketGame {
                             toss_won_by: toss_won_by,
                             toss_decision: toss_decision,
-                            human_player: human::Human {
+                            human_player: Player::<Human> {
                                 runs: 0,
                                 status: PlayerStatus::Batting,
                                 wickets: 0,
@@ -48,8 +48,9 @@ impl CricketGame {
                                 required_runrate: 0.0,
                                 current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
+                                player : Human {}
                             },
-                            genie_player: genie::Genie {
+                            genie_player: Player::<Computer> {
                                 runs: 0,
                                 status: PlayerStatus::Bowling,
                                 wickets: 0,
@@ -57,6 +58,7 @@ impl CricketGame {
                                 required_runrate: 0.0,
                                 current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
+                                player : Computer {}
                             },
                             score_board: ScoreBoard {
                                 innings: 1,
@@ -68,7 +70,7 @@ impl CricketGame {
                         return CricketGame {
                             toss_won_by: toss_won_by,
                             toss_decision: toss_decision,
-                            human_player: human::Human {
+                            human_player: Player::<Human> {
                                 runs: 0,
                                 status: PlayerStatus::Bowling,
                                 wickets: 0,
@@ -76,8 +78,9 @@ impl CricketGame {
                                 required_runrate: 0.0,
                                 current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
+                                player : Human {}
                             },
-                            genie_player: genie::Genie {
+                            genie_player: Player::<Computer> {
                                 runs: 0,
                                 status: PlayerStatus::Batting,
                                 wickets: 0,
@@ -85,6 +88,7 @@ impl CricketGame {
                                 required_runrate: 0.0,
                                 current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
+                                player : Computer {}
                             },
                             score_board: ScoreBoard {
                                 innings: 1,
@@ -101,7 +105,7 @@ impl CricketGame {
                         return CricketGame {
                             toss_won_by: toss_won_by,
                             toss_decision: toss_decision,
-                            human_player: human::Human {
+                            human_player: Player::<Human> {
                                 runs: 0,
                                 status: PlayerStatus::Bowling,
                                 wickets: 0,
@@ -109,8 +113,9 @@ impl CricketGame {
                                 required_runrate: 0.0,
                                 current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
+                                player : Human {}
                             },
-                            genie_player: genie::Genie {
+                            genie_player: Player::<Computer> {
                                 runs: 0,
                                 status: PlayerStatus::Batting,
                                 wickets: 0,
@@ -118,6 +123,7 @@ impl CricketGame {
                                 required_runrate: 0.0,
                                 current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
+                                player : Computer {}
                             },
                             score_board: ScoreBoard {
                                 innings: 1,
@@ -129,7 +135,7 @@ impl CricketGame {
                         return CricketGame {
                             toss_won_by: toss_won_by,
                             toss_decision: toss_decision,
-                            human_player: human::Human {
+                            human_player: Player::<Human> {
                                 runs: 0,
                                 status: PlayerStatus::Batting,
                                 wickets: 0,
@@ -137,8 +143,9 @@ impl CricketGame {
                                 required_runrate: 0.0,
                                 current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
+                                player : Human {}
                             },
-                            genie_player: genie::Genie {
+                            genie_player: Player::<Computer> {
                                 runs: 0,
                                 status: PlayerStatus::Bowling,
                                 wickets: 0,
@@ -146,6 +153,7 @@ impl CricketGame {
                                 required_runrate: 0.0,
                                 current_runrate: 0.0,
                                 won_game: GameStatus::InProgress,
+                                player : Computer {}
                             },
                             score_board: ScoreBoard {
                                 innings: 1,
