@@ -1,9 +1,12 @@
+#[macro_use]
+mod utils;
+
 mod errors;
 mod game;
 mod player;
 mod toss;
 mod umpire;
-mod utils;
+
 
 use std::io::{self};
 
